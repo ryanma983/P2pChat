@@ -15,7 +15,5 @@
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/gui/ChatApplication.java
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/MessageRouter.java
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/gui/ChatMessage.java
-/home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/util/EmojiRenderer.java
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/gui/EmojiPicker.java
-/home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/gui/ImageEmojiPicker.java
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/Message.java

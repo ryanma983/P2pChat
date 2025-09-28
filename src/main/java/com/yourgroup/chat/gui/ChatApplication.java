@@ -31,8 +31,7 @@ public class ChatApplication extends Application {
         
         // 加载 CSS 样式
         scene.getStylesheets().add(getClass().getResource("/css/enhanced-chat-style.css").toExternalForm());
-        scene.getStylesheets().add(getClass().getResource("/css/image-emoji-style.css").toExternalForm());
-        scene.getStylesheets().add(getClass().getResource("/css/emoji-chat-style.css").toExternalForm());
+
         scene.getStylesheets().add(getClass().getResource("/css/dynamic-emoji-fonts.css").toExternalForm());
         
         // 获取控制器并设置节点

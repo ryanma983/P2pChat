@@ -52,7 +52,7 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
     private ObservableList<OnlineMember> onlineMembers;
     private Timer statusUpdateTimer;
     private Map<String, PrivateChatWindow> privateChatWindows = new HashMap<>();
-    private ImageEmojiPicker emojiPicker;
+
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -86,12 +86,12 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
         aboutMenuItem.setOnAction(e -> showAboutDialog());
         settingsMenuItem.setOnAction(e -> showSettingsDialog());
         
-        // 初始化表情选择器
-        emojiPicker = new ImageEmojiPicker(this::insertEmoji);
-        emojiButton.setOnAction(e -> handleEmojiButton());
+        // 表情按钮暂时禁用
+        emojiButton.setDisable(true);
+        emojiButton.setVisible(false);
         
         // 添加欢迎消息
-        addSystemMessage("欢迎使用 P2P 聊天应用！支持群聊、私聊、文件传输和表情。");
+        addSystemMessage("欢迎使用 P2P 聊天应用！支持群聊、私聊和文件传输。");
     }
     
     /**
@@ -158,32 +158,7 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
         addSystemMessage("已打开与 " + nodeId + " 的私聊窗口");
     }
     
-    /**
-     * 处理表情按钮点击
-     */
-    @FXML
-    private void handleEmojiButton() {
-        if (emojiPicker.isShowing()) {
-            emojiPicker.hide();
-        } else {
-            // 计算表情选择器的显示位置（Discord风格的表情选择器更大）
-            double x = emojiButton.localToScreen(emojiButton.getBoundsInLocal()).getMinX();
-            double y = emojiButton.localToScreen(emojiButton.getBoundsInLocal()).getMinY() - 360;
-            emojiPicker.show(emojiButton, x, y);
-        }
-    }
-    
-    /**
-     * 插入表情到输入框
-     */
-    private void insertEmoji(String emoji) {
-        int caretPosition = messageInput.getCaretPosition();
-        String currentText = messageInput.getText();
-        String newText = currentText.substring(0, caretPosition) + emoji + currentText.substring(caretPosition);
-        messageInput.setText(newText);
-        messageInput.positionCaret(caretPosition + emoji.length());
-        messageInput.requestFocus();
-    }
+
     
     // updateChatMode方法已移除，默认群聊模式
     

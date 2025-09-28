@@ -32,7 +32,7 @@ public class PrivateChatWindow {
     private Button fileButton;
     private Button emojiButton;
     private Label statusLabel;
-    private ImageEmojiPicker emojiPicker;
+
     
     public PrivateChatWindow(Node chatNode, OnlineMember targetMember) {
         this.chatNode = chatNode;
@@ -64,12 +64,13 @@ public class PrivateChatWindow {
         // 创建场景并应用样式
         Scene scene = new Scene(root);
         scene.getStylesheets().add(getClass().getResource("/css/private-chat-style.css").toExternalForm());
-        scene.getStylesheets().add(getClass().getResource("/css/emoji-picker-style.css").toExternalForm());
+
         
         stage.setScene(scene);
         
-        // 初始化表情选择器
-        emojiPicker = new ImageEmojiPicker(this::insertEmoji);
+        // 表情按钮暂时禁用
+        emojiButton.setDisable(true);
+        emojiButton.setVisible(false);
         
         // 设置窗口关闭事件
         stage.setOnCloseRequest(e -> {
@@ -133,7 +134,7 @@ public class PrivateChatWindow {
         
         emojiButton = new Button("😊");
         emojiButton.getStyleClass().add("emoji-button-small");
-        emojiButton.setOnAction(e -> handleEmojiButton());
+        // 表情按钮已禁用
         
         fileButton = new Button("文件");
         fileButton.getStyleClass().add("file-button");
@@ -170,28 +171,7 @@ public class PrivateChatWindow {
         }
     }
     
-    private void handleEmojiButton() {
-        if (emojiPicker.isShowing()) {
-            emojiPicker.hide();
-        } else {
-            // 计算表情选择器的显示位置（Discord风格的表情选择器更大）
-            double x = emojiButton.localToScreen(emojiButton.getBoundsInLocal()).getMinX();
-            double y = emojiButton.localToScreen(emojiButton.getBoundsInLocal()).getMinY() - 360;
-            emojiPicker.show(emojiButton, x, y);
-        }
-    }
-    
-    /**
-     * 插入表情到输入框
-     */
-    private void insertEmoji(String emoji) {
-        int caretPosition = messageInput.getCaretPosition();
-        String currentText = messageInput.getText();
-        String newText = currentText.substring(0, caretPosition) + emoji + currentText.substring(caretPosition);
-        messageInput.setText(newText);
-        messageInput.positionCaret(caretPosition + emoji.length());
-        messageInput.requestFocus();
-    }
+
     
     private void handleSendMessage() {
         String messageText = messageInput.getText().trim();
