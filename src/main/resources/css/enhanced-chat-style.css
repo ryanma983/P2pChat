@@ -7,23 +7,26 @@
 
 /* 菜单栏样式 */
 .menu-bar {
-    -fx-background-color: #2c3e50;
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #dee2e6;
+    -fx-border-width: 0 0 1 0;
 }
 
 .menu-bar > .container > .menu-button {
-    -fx-text-fill: white;
+    -fx-text-fill: #2c3e50;
+    -fx-background-color: transparent;
 }
 
 .menu-bar > .container > .menu-button > .label {
-    -fx-text-fill: white;
+    -fx-text-fill: #2c3e50;
 }
 
 .menu-bar > .container > .menu-button:hover {
-    -fx-background-color: #34495e;
+    -fx-background-color: #e9ecef;
 }
 
 .menu-bar > .container > .menu-button:hover > .label {
-    -fx-text-fill: white;
+    -fx-text-fill: #2c3e50;
 }
 
 /* 菜单项样式 */
