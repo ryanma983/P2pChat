@@ -2,6 +2,7 @@ com/yourgroup/chat/gui/OnlineMember.class
 com/yourgroup/chat/gui/MessageListCell.class
 com/yourgroup/chat/MessageRouter$1.class
 com/yourgroup/chat/gui/DiscordEmojiPicker.class
+com/yourgroup/chat/gui/JavaFXEmojiPicker$EmojiData.class
 com/yourgroup/chat/gui/CompatibleEmojiPicker$EmojiItem.class
 com/yourgroup/chat/gui/MessageListCell$1.class
 com/yourgroup/chat/gui/ChatMessage$MessageType.class
@@ -9,6 +10,7 @@ com/yourgroup/chat/Message.class
 com/yourgroup/chat/PeerConnection.class
 com/yourgroup/chat/Message$Type.class
 com/yourgroup/chat/MessageRouter.class
+com/yourgroup/chat/gui/JavaFXEmojiPicker.class
 com/yourgroup/chat/Node$1.class
 com/yourgroup/chat/util/EmojiSupport.class
 com/yourgroup/chat/gui/EnhancedChatController.class

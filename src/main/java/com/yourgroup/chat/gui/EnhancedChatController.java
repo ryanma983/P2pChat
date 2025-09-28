@@ -52,7 +52,7 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
     private ObservableList<OnlineMember> onlineMembers;
     private Timer statusUpdateTimer;
     private Map<String, PrivateChatWindow> privateChatWindows = new HashMap<>();
-    private CompatibleEmojiPicker emojiPicker;
+    private JavaFXEmojiPicker emojiPicker;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -87,7 +87,7 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
         settingsMenuItem.setOnAction(e -> showSettingsDialog());
         
         // 初始化表情选择器
-        emojiPicker = new CompatibleEmojiPicker(this::insertEmoji);
+        emojiPicker = new JavaFXEmojiPicker(this::insertEmoji);
         emojiButton.setOnAction(e -> handleEmojiButton());
         
         // 添加欢迎消息
