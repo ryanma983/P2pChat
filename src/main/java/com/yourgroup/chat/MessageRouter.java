@@ -11,6 +11,7 @@ public class MessageRouter {
     private final Node node;
     private final Set<String> processedMessages = new CopyOnWriteArraySet<>();
     private final Map<String, Long> messageTimestamps = new ConcurrentHashMap<>();
+    private final Set<String> processedNodes = new CopyOnWriteArraySet<>();
     private MessageListener messageListener;
     
     // 清理过期消息记录的时间间隔（毫秒）
@@ -103,7 +104,17 @@ public class MessageRouter {
      * 处理握手消息
      */
     private void handleHelloMessage(PeerConnection source, Message message) {
-        System.out.println("[调试] 收到握手消息，来自节点: " + message.getSenderId() + ", 地址: " + source.getAddress());
+        String senderId = message.getSenderId();
+        System.out.println("[调试] 收到握手消息，来自节点: " + senderId + ", 地址: " + source.getAddress());
+        
+        // 检查是否已经处理过这个节点
+        if (processedNodes.contains(senderId)) {
+            System.out.println("[调试] 节点 " + senderId + " 已经处理过，跳过重复处理");
+            return;
+        }
+        
+        // 标记节点为已处理
+        processedNodes.add(senderId);
         
         // 解析握手消息中的节点地址信息
         String content = message.getContent();
@@ -111,15 +122,15 @@ public class MessageRouter {
             String[] parts = content.split(":");
             if (parts.length >= 2) {
                 String nodeAddress = "localhost:" + parts[parts.length - 1]; // 提取端口号
-                node.addNodeAddress(message.getSenderId(), nodeAddress);
-                System.out.println("[调试] 解析节点地址: " + message.getSenderId() + " -> " + nodeAddress);
+                node.addNodeAddress(senderId, nodeAddress);
+                System.out.println("[调试] 解析节点地址: " + senderId + " -> " + nodeAddress);
             }
         }
         
         // 通知GUI有新成员加入
         if (messageListener != null) {
-            System.out.println("[调试] 通知GUI添加成员: " + message.getSenderId());
-            messageListener.onMemberJoined(message.getSenderId(), source.getAddress());
+            System.out.println("[调试] 通知GUI添加成员: " + senderId);
+            messageListener.onMemberJoined(senderId, source.getAddress());
         } else {
             System.out.println("[调试] messageListener 为 null，无法通知GUI");
         }
@@ -200,21 +211,30 @@ public class MessageRouter {
         for (String peer : peers) {
             String trimmedPeer = peer.trim();
             if (!trimmedPeer.isEmpty() && !trimmedPeer.equals("localhost:" + node.getPort())) {
-                // 尝试连接到新发现的节点
-                if (!node.getConnections().containsKey(trimmedPeer)) {
+                // 简单检查：是否已经有到该地址的连接，或者该地址在节点地址映射中
+                boolean alreadyConnected = node.getConnections().containsKey(trimmedPeer) || 
+                                         node.getNodeAddresses().containsValue(trimmedPeer);
+                
+                if (!alreadyConnected) {
                     System.out.println("[调试] 发现新节点，尝试连接: " + trimmedPeer);
                     // 延迟一点时间再连接，避免连接冲突
                     final String finalPeer = trimmedPeer;
                     new Thread(() -> {
                         try {
                             Thread.sleep(1000); // 等待1秒
-                            node.connectToPeer(finalPeer);
+                            // 再次检查是否已经连接（在延迟期间可能已经建立连接）
+                            if (!node.getConnections().containsKey(finalPeer) && 
+                                !node.getNodeAddresses().containsValue(finalPeer)) {
+                                node.connectToPeer(finalPeer);
+                            } else {
+                                System.out.println("[调试] 延迟期间节点 " + finalPeer + " 已经连接，跳过");
+                            }
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                         }
                     }).start();
                 } else {
-                    System.out.println("[调试] 节点 " + trimmedPeer + " 已经连接");
+                    System.out.println("[调试] 节点 " + trimmedPeer + " 已经连接，跳过");
                 }
             } else {
                 System.out.println("[调试] 跳过节点: " + trimmedPeer + " (空或自己)");
