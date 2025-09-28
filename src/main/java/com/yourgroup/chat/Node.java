@@ -1,0 +1,243 @@
+package com.yourgroup.chat;
+
+import java.io.*;
+import java.net.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+/**
+ * P2P聊天网络中的节点类
+ * 每个节点既可以作为服务器接受连接，也可以作为客户端连接到其他节点
+ */
+public class Node {
+    private final int port;
+    private final String nodeId;
+    private ServerSocket serverSocket;
+    private boolean running = false;
+    
+    // 存储与其他节点的连接
+    private final Map<String, PeerConnection> connections = new ConcurrentHashMap<>();
+    
+    // 已知的其他节点地址列表
+    private final List<String> knownPeers = new CopyOnWriteArrayList<>();
+    
+    public Node(int port) {
+        this.port = port;
+        this.nodeId = generateNodeId();
+        System.out.println("节点创建完成，ID: " + nodeId + ", 端口: " + port);
+    }
+    
+    /**
+     * 生成唯一的节点ID
+     */
+    private String generateNodeId() {
+        return "Node-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 1000);
+    }
+    
+    /**
+     * 启动节点，开始监听连接
+     */
+    public void start() {
+        try {
+            serverSocket = new ServerSocket(port);
+            running = true;
+            System.out.println("节点 " + nodeId + " 启动成功，监听端口: " + port);
+            
+            // 启动服务器线程，接受新连接
+            new Thread(this::acceptConnections).start();
+            
+            // 尝试连接到已知的节点
+            connectToKnownPeers();
+            
+        } catch (IOException e) {
+            System.err.println("无法启动节点: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * 停止节点
+     */
+    public void stop() {
+        running = false;
+        try {
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+            // 关闭所有连接
+            for (PeerConnection connection : connections.values()) {
+                connection.close();
+            }
+            connections.clear();
+            System.out.println("节点 " + nodeId + " 已停止");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * 添加已知节点地址
+     */
+    public void addKnownPeer(String address) {
+        if (!knownPeers.contains(address)) {
+            knownPeers.add(address);
+            System.out.println("添加已知节点: " + address);
+        }
+    }
+    
+    /**
+     * 连接到指定的节点
+     */
+    public boolean connectToPeer(String address) {
+        try {
+            String[] parts = address.split(":");
+            if (parts.length != 2) {
+                System.err.println("无效的节点地址格式: " + address + " (应该是 host:port)");
+                return false;
+            }
+            
+            String host = parts[0];
+            int peerPort = Integer.parseInt(parts[1]);
+            
+            // 避免连接到自己
+            if (host.equals("localhost") && peerPort == this.port) {
+                return false;
+            }
+            
+            // 检查是否已经连接
+            if (connections.containsKey(address)) {
+                System.out.println("已经连接到节点: " + address);
+                return true;
+            }
+            
+            Socket socket = new Socket(host, peerPort);
+            PeerConnection connection = new PeerConnection(socket, address, false);
+            connections.put(address, connection);
+            
+            // 启动连接处理线程
+            new Thread(() -> handlePeerConnection(connection)).start();
+            
+            System.out.println("成功连接到节点: " + address);
+            
+            // 发送握手消息
+            connection.sendMessage("HELLO:" + nodeId + ":" + port);
+            
+            return true;
+            
+        } catch (Exception e) {
+            System.err.println("连接到节点 " + address + " 失败: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * 连接到所有已知节点
+     */
+    private void connectToKnownPeers() {
+        for (String peer : knownPeers) {
+            connectToPeer(peer);
+        }
+    }
+    
+    /**
+     * 接受新的连接
+     */
+    private void acceptConnections() {
+        while (running) {
+            try {
+                Socket clientSocket = serverSocket.accept();
+                String remoteAddress = clientSocket.getRemoteSocketAddress().toString();
+                System.out.println("接收到新连接: " + remoteAddress);
+                
+                PeerConnection connection = new PeerConnection(clientSocket, remoteAddress, true);
+                
+                // 启动连接处理线程
+                new Thread(() -> handlePeerConnection(connection)).start();
+                
+            } catch (IOException e) {
+                if (running) {
+                    System.err.println("接受连接时发生错误: " + e.getMessage());
+                }
+            }
+        }
+    }
+    
+    /**
+     * 处理与对等节点的连接
+     */
+    private void handlePeerConnection(PeerConnection connection) {
+        try {
+            String line;
+            while ((line = connection.readMessage()) != null) {
+                handleMessage(connection, line);
+            }
+        } catch (IOException e) {
+            System.out.println("与节点 " + connection.getAddress() + " 的连接断开");
+        } finally {
+            connections.remove(connection.getAddress());
+            connection.close();
+        }
+    }
+    
+    /**
+     * 处理收到的消息
+     */
+    private void handleMessage(PeerConnection connection, String message) {
+        System.out.println("收到来自 " + connection.getAddress() + " 的消息: " + message);
+        
+        if (message.startsWith("HELLO:")) {
+            // 处理握手消息
+            String[] parts = message.split(":");
+            if (parts.length >= 3) {
+                String peerId = parts[1];
+                String peerPort = parts[2];
+                System.out.println("节点 " + peerId + " 已连接 (端口: " + peerPort + ")");
+                
+                // 如果这是一个入站连接，我们需要记录它的地址
+                if (connection.isInbound()) {
+                    String peerAddress = connection.getSocket().getInetAddress().getHostAddress() + ":" + peerPort;
+                    connections.put(peerAddress, connection);
+                    connection.setAddress(peerAddress);
+                }
+            }
+        } else if (message.startsWith("CHAT:")) {
+            // 处理聊天消息
+            String chatMessage = message.substring(5);
+            System.out.println("聊天消息: " + chatMessage);
+            // 这里将来会广播给其他节点
+        }
+    }
+    
+    /**
+     * 发送聊天消息到所有连接的节点
+     */
+    public void sendChatMessage(String message) {
+        String fullMessage = "CHAT:" + message;
+        for (PeerConnection connection : connections.values()) {
+            connection.sendMessage(fullMessage);
+        }
+        System.out.println("消息已发送到 " + connections.size() + " 个节点");
+    }
+    
+    /**
+     * 获取当前连接的节点数量
+     */
+    public int getConnectionCount() {
+        return connections.size();
+    }
+    
+    /**
+     * 获取节点ID
+     */
+    public String getNodeId() {
+        return nodeId;
+    }
+    
+    /**
+     * 获取监听端口
+     */
+    public int getPort() {
+        return port;
+    }
+}
