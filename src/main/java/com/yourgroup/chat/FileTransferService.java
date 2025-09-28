@@ -79,17 +79,42 @@ public class FileTransferService {
      */
     private void handleFileTransferConnection(Socket socket) {
         try {
+            System.out.println("[文件传输] 接受新的文件传输连接");
+            
             // 获取输入流
             InputStream inputStream = socket.getInputStream();
             
-            // 读取传输头信息（读取到换行符为止）
-            StringBuilder headerBuilder = new StringBuilder();
-            int b;
-            while ((b = inputStream.read()) != -1 && b != '\n') {
-                headerBuilder.append((char) b);
+            // 读取4字节的头长度
+            byte[] lengthBytes = new byte[4];
+            int bytesRead = 0;
+            while (bytesRead < 4) {
+                int read = inputStream.read(lengthBytes, bytesRead, 4 - bytesRead);
+                if (read == -1) {
+                    throw new IOException("连接意外关闭");
+                }
+                bytesRead += read;
             }
             
-            String header = headerBuilder.toString().trim();
+            // 解析头长度
+            int headerLength = ((lengthBytes[0] & 0xFF) << 24) |
+                              ((lengthBytes[1] & 0xFF) << 16) |
+                              ((lengthBytes[2] & 0xFF) << 8) |
+                              (lengthBytes[3] & 0xFF);
+            
+            System.out.println("[文件传输] 头信息长度: " + headerLength);
+            
+            // 读取头信息
+            byte[] headerBytes = new byte[headerLength];
+            bytesRead = 0;
+            while (bytesRead < headerLength) {
+                int read = inputStream.read(headerBytes, bytesRead, headerLength - bytesRead);
+                if (read == -1) {
+                    throw new IOException("连接意外关闭");
+                }
+                bytesRead += read;
+            }
+            
+            String header = new String(headerBytes, "UTF-8");
             System.out.println("[文件传输] 收到传输头: " + header);
             
             String[] parts = header.split(":");
@@ -102,13 +127,19 @@ public class FileTransferService {
                 
                 if ("SEND".equals(action)) {
                     // 接收文件，使用传输头中的保存路径
-                    receiveFileDirectly(socket, sessionId, fileName, fileSize, savePath);
+                    receiveFileWithBinaryProtocol(inputStream, sessionId, fileName, fileSize, savePath);
                 }
             }
             
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println("处理文件传输连接时发生错误: " + e.getMessage());
             e.printStackTrace();
+        } finally {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                // 忽略关闭异常
+            }
         }
     }
     
@@ -139,12 +170,22 @@ public class FileTransferService {
                     // 获取输出流
                     OutputStream outputStream = socket.getOutputStream();
                     
-                    // 发送传输头（使用字节流发送，确保编码一致）
-                    String header = String.format("SEND:%s:%s:%d:%s\n", sessionId, file.getName(), file.length(), savePath);
-                    outputStream.write(header.getBytes("UTF-8"));
+                    // 准备传输头
+                    String header = String.format("SEND:%s:%s:%d:%s", sessionId, file.getName(), file.length(), savePath);
+                    byte[] headerBytes = header.getBytes("UTF-8");
+                    
+                    // 发送头长度（4字节）
+                    outputStream.write((headerBytes.length >> 24) & 0xFF);
+                    outputStream.write((headerBytes.length >> 16) & 0xFF);
+                    outputStream.write((headerBytes.length >> 8) & 0xFF);
+                    outputStream.write(headerBytes.length & 0xFF);
+                    
+                    // 发送头信息
+                    outputStream.write(headerBytes);
                     outputStream.flush();
                     
-                    System.out.println("[文件传输] 发送头信息: " + header.trim());
+                    System.out.println("[文件传输] 发送头信息: " + header);
+                    System.out.println("[文件传输] 头信息长度: " + headerBytes.length);
                     
                     // 发送文件数据
                     byte[] buffer = new byte[8192];
@@ -187,33 +228,40 @@ public class FileTransferService {
     }
     
     /**
-     * 直接接收文件数据
+     * 使用二进制协议接收文件数据
      */
-    private void receiveFileDirectly(Socket socket, String sessionId, String fileName, long fileSize, String savePath) {
+    private void receiveFileWithBinaryProtocol(InputStream inputStream, String sessionId, String fileName, long fileSize, String savePath) {
         try {
             System.out.println("[文件传输] 开始接收文件: " + fileName + " → " + savePath);
-            
-            // 直接从socket获取输入流，不要重新创建BufferedReader
-            InputStream inputStream = socket.getInputStream();
+            System.out.println("[文件传输] 期望文件大小: " + fileSize + " bytes");
             
             // 创建目标文件
             File targetFile = new File(savePath);
-            targetFile.getParentFile().mkdirs();
+            if (targetFile.getParentFile() != null) {
+                targetFile.getParentFile().mkdirs();
+            }
             
             try (FileOutputStream fileOutput = new FileOutputStream(targetFile)) {
                 byte[] buffer = new byte[8192];
                 int bytesRead;
                 long totalReceived = 0;
                 
-                // 直接读取文件数据，不跳过任何内容
-                while (totalReceived < fileSize && (bytesRead = inputStream.read(buffer)) != -1) {
-                    int bytesToWrite = (int) Math.min(bytesRead, fileSize - totalReceived);
-                    fileOutput.write(buffer, 0, bytesToWrite);
-                    totalReceived += bytesToWrite;
+                // 直接从输入流读取文件数据
+                while (totalReceived < fileSize) {
+                    int remainingBytes = (int) Math.min(buffer.length, fileSize - totalReceived);
+                    bytesRead = inputStream.read(buffer, 0, remainingBytes);
+                    
+                    if (bytesRead == -1) {
+                        System.err.println("[文件传输] 连接意外关闭，已接收: " + totalReceived + "/" + fileSize + " bytes");
+                        break;
+                    }
+                    
+                    fileOutput.write(buffer, 0, bytesRead);
+                    totalReceived += bytesRead;
                     
                     // 显示进度
                     int progress = (int) ((totalReceived * 100) / fileSize);
-                    if (totalReceived % (8192 * 10) == 0 || totalReceived == fileSize) { // 每接收约80KB或完成时显示进度
+                    if (totalReceived % (8192 * 5) == 0 || totalReceived == fileSize) { // 每接收约40KB或完成时显示进度
                         System.out.println("[文件传输] 接收进度: " + progress + "% (" + totalReceived + "/" + fileSize + " bytes)");
                     }
                 }
@@ -225,6 +273,15 @@ public class FileTransferService {
                 // 验证文件大小
                 if (totalReceived != fileSize) {
                     System.err.println("[文件传输] 警告：接收的文件大小不匹配！期望: " + fileSize + ", 实际: " + totalReceived);
+                } else {
+                    System.out.println("[文件传输] 文件大小验证通过");
+                }
+                
+                // 验证文件是否真的存在
+                if (targetFile.exists() && targetFile.length() == totalReceived) {
+                    System.out.println("[文件传输] 文件成功保存，大小: " + targetFile.length() + " bytes");
+                } else {
+                    System.err.println("[文件传输] 文件保存失败或大小不匹配");
                 }
                 
                 // 通知GUI
@@ -238,7 +295,7 @@ public class FileTransferService {
                 
             }
             
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println("接收文件失败: " + e.getMessage());
             e.printStackTrace();
             if (node.getMessageRouter().getMessageListener() != null) {
