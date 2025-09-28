@@ -5,6 +5,7 @@
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/FileTransferService.java
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/gui/DiscordEmojiPicker.java
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/gui/PrivateChatWindow.java
+/home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/gui/CompatibleEmojiPicker.java
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/MessageListener.java
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/gui/MessageListCell.java
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/gui/EnhancedChatController.java

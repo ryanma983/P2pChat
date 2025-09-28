@@ -32,7 +32,7 @@ public class PrivateChatWindow {
     private Button fileButton;
     private Button emojiButton;
     private Label statusLabel;
-    private DiscordEmojiPicker emojiPicker;
+    private CompatibleEmojiPicker emojiPicker;
     
     public PrivateChatWindow(Node chatNode, OnlineMember targetMember) {
         this.chatNode = chatNode;
@@ -69,7 +69,7 @@ public class PrivateChatWindow {
         stage.setScene(scene);
         
         // 初始化表情选择器
-        emojiPicker = new DiscordEmojiPicker(this::insertEmoji);
+        emojiPicker = new CompatibleEmojiPicker(this::insertEmoji);
         
         // 设置窗口关闭事件
         stage.setOnCloseRequest(e -> {
