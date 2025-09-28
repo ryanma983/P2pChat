@@ -10,23 +10,19 @@
     -fx-background-color: #2c3e50;
 }
 
-.menu-bar .label {
+.menu-bar > .container > .menu-button {
     -fx-text-fill: white;
 }
 
-.menu-bar .menu {
+.menu-bar > .container > .menu-button > .label {
     -fx-text-fill: white;
 }
 
-.menu-bar .menu .label {
-    -fx-text-fill: white;
-}
-
-.menu-bar .menu:hover {
+.menu-bar > .container > .menu-button:hover {
     -fx-background-color: #34495e;
 }
 
-.menu-bar .menu:hover .label {
+.menu-bar > .container > .menu-button:hover > .label {
     -fx-text-fill: white;
 }
 

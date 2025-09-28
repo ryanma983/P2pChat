@@ -77,8 +77,32 @@ public class MessageRouter {
      * 广播消息到网络
      */
     public void broadcastMessage(Message message) {
+        // 首先在本地处理消息
+        handleLocalMessage(message);
+        
+        // 标记消息为已处理
         markMessageAsProcessed(message);
+        
+        // 转发给其他节点
         forwardMessage(null, message);
+    }
+    
+    /**
+     * 处理本地消息（不转发）
+     */
+    private void handleLocalMessage(Message message) {
+        switch (message.getType()) {
+            case CHAT:
+                handleChatMessage(null, message);
+                break;
+            case PRIVATE_CHAT:
+                handlePrivateChatMessage(null, message);
+                break;
+            case FILE_REQUEST:
+                handleFileTransferRequest(null, message);
+                break;
+            // 其他类型的消息不需要本地处理
+        }
     }
     
     /**

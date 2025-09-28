@@ -110,8 +110,8 @@
                                     <Button fx:id="sendButton" defaultButton="true" onAction="#handleSendMessage" prefWidth="80.0" text="发送" />
                                     <HBox alignment="CENTER" spacing="5.0">
                                        <children>
-                                          <Button fx:id="emojiButton" onAction="#handleEmojiButton" prefWidth="37.0" text="😊" />
-                                          <Button fx:id="fileButton" onAction="#handleSendFile" prefWidth="37.0" text="📁" />
+                                          <Button fx:id="emojiButton" onAction="#handleEmojiButton" prefWidth="50.0" text="表情" />
+                                          <Button fx:id="fileButton" onAction="#handleSendFile" prefWidth="50.0" text="文件" />
                                        </children>
                                     </HBox>
                                     <Button fx:id="connectButton" onAction="#handleConnect" prefWidth="80.0" text="连接" />
