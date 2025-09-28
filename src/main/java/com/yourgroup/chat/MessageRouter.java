@@ -57,6 +57,9 @@ public class MessageRouter {
             case FILE_REQUEST:
                 handleFileTransferRequest(source, message);
                 break;
+            case FILE_TRANSFER:
+                handleFileTransferResponse(source, message);
+                break;
             case PEER_LIST:
                 handlePeerListMessage(source, message);
                 break;
@@ -221,6 +224,50 @@ public class MessageRouter {
             }
         } else {
             System.err.println("文件传输请求格式错误: " + message.getContent());
+        }
+    }
+    
+    /**
+     * 处理文件传输响应
+     */
+    private void handleFileTransferResponse(PeerConnection source, Message message) {
+        System.out.println("[调试] 收到文件传输响应，内容: " + message.getContent());
+        
+        // 检查是否是发给自己的响应
+        if (message.getTargetId() != null && message.getTargetId().equals(node.getNodeId())) {
+            String content = message.getContent();
+            String senderId = message.getSenderId();
+            
+            if (content.startsWith("ACCEPT:")) {
+                // 文件传输被接受
+                String fileInfo = content.substring(7); // 移除"ACCEPT:"前缀
+                String[] parts = fileInfo.split(":", 2);
+                if (parts.length >= 2) {
+                    String fileName = parts[0];
+                    String savePath = parts[1];
+                    
+                    System.out.println("[文件传输] " + senderId + " 接受了文件: " + fileName);
+                    System.out.println("[文件传输] 保存路径: " + savePath);
+                    
+                    // 通知GUI
+                    if (messageListener != null) {
+                        messageListener.onSystemMessage("用户 " + senderId + " 接受了文件传输: " + fileName);
+                    }
+                    
+                    // TODO: 在这里实现实际的文件传输逻辑
+                    // 可以启动文件传输线程，将文件发送到指定的保存路径
+                }
+            } else if (content.startsWith("REJECT:")) {
+                // 文件传输被拒绝
+                String fileName = content.substring(7); // 移除"REJECT:"前缀
+                
+                System.out.println("[文件传输] " + senderId + " 拒绝了文件: " + fileName);
+                
+                // 通知GUI
+                if (messageListener != null) {
+                    messageListener.onSystemMessage("用户 " + senderId + " 拒绝了文件传输: " + fileName);
+                }
+            }
         }
     }
     

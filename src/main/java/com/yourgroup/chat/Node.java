@@ -293,6 +293,28 @@ public class Node {
     }
     
     /**
+     * 接受文件传输
+     */
+    public void acceptFileTransfer(String senderId, String fileName, String savePath) {
+        // 发送文件传输接受消息
+        String acceptInfo = fileName + ":" + savePath;
+        Message acceptMessage = new Message(Message.Type.FILE_TRANSFER, nodeId, "ACCEPT:" + acceptInfo, senderId);
+        messageRouter.broadcastMessage(acceptMessage);
+        System.out.println("已接受来自 " + senderId + " 的文件传输: " + fileName);
+        System.out.println("文件将保存到: " + savePath);
+    }
+    
+    /**
+     * 拒绝文件传输
+     */
+    public void rejectFileTransfer(String senderId, String fileName) {
+        // 发送文件传输拒绝消息
+        Message rejectMessage = new Message(Message.Type.FILE_TRANSFER, nodeId, "REJECT:" + fileName, senderId);
+        messageRouter.broadcastMessage(rejectMessage);
+        System.out.println("已拒绝来自 " + senderId + " 的文件传输: " + fileName);
+    }
+    
+    /**
      * 获取当前连接的节点数量
      */
     public int getConnectionCount() {

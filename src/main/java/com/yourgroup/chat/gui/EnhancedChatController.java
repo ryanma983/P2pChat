@@ -416,17 +416,27 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
             
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
-                addSystemMessage("已接受来自 " + senderId + " 的文件: " + fileName + " (" + fileSizeStr + ")");
-                
-                // 如果有对应的私聊窗口，也在私聊窗口中显示
-                PrivateChatWindow privateChatWindow = privateChatWindows.get(senderId);
-                if (privateChatWindow != null && privateChatWindow.isShowing()) {
-                    privateChatWindow.addFileTransferMessage(senderId, fileName, true);
+                // 选择保存位置
+                String downloadPath = chooseDownloadLocation(fileName);
+                if (downloadPath != null) {
+                    addSystemMessage("已接受来自 " + senderId + " 的文件: " + fileName + " (" + fileSizeStr + ")");
+                    addSystemMessage("文件将保存到: " + downloadPath);
+                    
+                    // 如果有对应的私聊窗口，也在私聊窗口中显示
+                    PrivateChatWindow privateChatWindow = privateChatWindows.get(senderId);
+                    if (privateChatWindow != null && privateChatWindow.isShowing()) {
+                        privateChatWindow.addFileTransferMessage(senderId, fileName, true);
+                    }
+                    
+                    // 通知发送方开始文件传输
+                    chatNode.acceptFileTransfer(senderId, fileName, downloadPath);
+                } else {
+                    addSystemMessage("已取消接收文件: " + fileName);
                 }
-                
-                // TODO: 实现实际的文件接收逻辑
             } else {
                 addSystemMessage("已拒绝来自 " + senderId + " 的文件: " + fileName + " (" + fileSizeStr + ")");
+                // 通知发送方拒绝文件传输
+                chatNode.rejectFileTransfer(senderId, fileName);
             }
         });
     }
@@ -502,6 +512,49 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
         alert.setHeaderText("设置功能");
         alert.setContentText("设置功能正在开发中...");
         alert.showAndWait();
+    }
+    
+    /**
+     * 选择文件下载位置
+     */
+    private String chooseDownloadLocation(String fileName) {
+        // 创建默认下载目录
+        String userHome = System.getProperty("user.home");
+        String defaultDownloadDir = userHome + File.separator + "P2PChat_Downloads";
+        File downloadDir = new File(defaultDownloadDir);
+        
+        if (!downloadDir.exists()) {
+            downloadDir.mkdirs();
+        }
+        
+        // 使用文件选择器让用户选择保存位置
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("选择文件保存位置");
+        fileChooser.setInitialDirectory(downloadDir);
+        fileChooser.setInitialFileName(fileName);
+        
+        File selectedFile = fileChooser.showSaveDialog(sendButton.getScene().getWindow());
+        
+        if (selectedFile != null) {
+            return selectedFile.getAbsolutePath();
+        } else {
+            // 如果用户取消选择，使用默认位置
+            File defaultFile = new File(downloadDir, fileName);
+            // 如果文件已存在，添加数字后缀
+            int counter = 1;
+            while (defaultFile.exists()) {
+                String nameWithoutExt = fileName;
+                String extension = "";
+                int lastDot = fileName.lastIndexOf('.');
+                if (lastDot > 0) {
+                    nameWithoutExt = fileName.substring(0, lastDot);
+                    extension = fileName.substring(lastDot);
+                }
+                defaultFile = new File(downloadDir, nameWithoutExt + "_" + counter + extension);
+                counter++;
+            }
+            return defaultFile.getAbsolutePath();
+        }
     }
     
     /**
