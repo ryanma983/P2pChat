@@ -1,6 +1,6 @@
 /* 全局样式 */
 .root {
-    -fx-font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI", "Microsoft YaHei", sans-serif;
+    -fx-font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
     -fx-font-size: 14px;
     -fx-background-color: #f5f5f5;
 }
@@ -287,19 +287,7 @@
     -fx-background-color: #7d3c98;
 }
 
-/* 表情按钮特殊样式 */
-#emojiButton {
-    -fx-background-color: #f39c12;
-    -fx-font-size: 16px;
-}
 
-#emojiButton:hover {
-    -fx-background-color: #e67e22;
-}
-
-#emojiButton:pressed {
-    -fx-background-color: #d35400;
-}
 
 /* 连接按钮特殊样式 */
 #connectButton {

@@ -165,24 +165,7 @@
     -fx-background-color: #7d3c98;
 }
 
-.emoji-button-small {
-    -fx-background-color: #f39c12;
-    -fx-text-fill: white;
-    -fx-border-radius: 20;
-    -fx-background-radius: 20;
-    -fx-font-weight: bold;
-    -fx-font-size: 16px;
-    -fx-padding: 8 15 8 15;
-    -fx-cursor: hand;
-}
 
-.emoji-button-small:hover {
-    -fx-background-color: #e67e22;
-}
-
-.emoji-button-small:pressed {
-    -fx-background-color: #d35400;
-}
 
 /* 滚动条样式 */
 .scroll-bar {

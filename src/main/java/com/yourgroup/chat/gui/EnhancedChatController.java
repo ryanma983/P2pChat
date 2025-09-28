@@ -40,7 +40,7 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
     @FXML private TextArea messageInput;
     @FXML private Button sendButton;
     @FXML private Button fileButton;
-    @FXML private Button emojiButton;
+
     @FXML private Button connectButton;
     
     // 菜单项
@@ -86,9 +86,7 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
         aboutMenuItem.setOnAction(e -> showAboutDialog());
         settingsMenuItem.setOnAction(e -> showSettingsDialog());
         
-        // 表情按钮暂时禁用
-        emojiButton.setDisable(true);
-        emojiButton.setVisible(false);
+
         
         // 添加欢迎消息
         addSystemMessage("欢迎使用 P2P 聊天应用！支持群聊、私聊和文件传输。");

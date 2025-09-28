@@ -30,7 +30,7 @@ public class PrivateChatWindow {
     private TextArea messageInput;
     private Button sendButton;
     private Button fileButton;
-    private Button emojiButton;
+
     private Label statusLabel;
 
     
@@ -68,9 +68,7 @@ public class PrivateChatWindow {
         
         stage.setScene(scene);
         
-        // 表情按钮暂时禁用
-        emojiButton.setDisable(true);
-        emojiButton.setVisible(false);
+
         
         // 设置窗口关闭事件
         stage.setOnCloseRequest(e -> {
@@ -132,10 +130,6 @@ public class PrivateChatWindow {
         HBox buttonArea = new HBox(10);
         buttonArea.setAlignment(Pos.CENTER_RIGHT);
         
-        emojiButton = new Button("😊");
-        emojiButton.getStyleClass().add("emoji-button-small");
-        // 表情按钮已禁用
-        
         fileButton = new Button("文件");
         fileButton.getStyleClass().add("file-button");
         fileButton.setOnAction(e -> handleSendFile());
@@ -148,7 +142,7 @@ public class PrivateChatWindow {
         // 绑定发送按钮状态
         sendButton.disableProperty().bind(messageInput.textProperty().isEmpty());
         
-        buttonArea.getChildren().addAll(emojiButton, fileButton, sendButton);
+        buttonArea.getChildren().addAll(fileButton, sendButton);
         
         inputArea.getChildren().addAll(messageInput, buttonArea);
         root.setBottom(inputArea);

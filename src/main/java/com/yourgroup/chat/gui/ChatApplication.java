@@ -1,7 +1,7 @@
 package com.yourgroup.chat.gui;
 
 import com.yourgroup.chat.Node;
-import com.yourgroup.chat.util.EmojiSupport;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -21,9 +21,7 @@ public class ChatApplication extends Application {
     
     @Override
     public void start(Stage primaryStage) throws IOException {
-        // 检测表情字体支持
         System.out.println("=== P2P Chat 启动 ===");
-        EmojiSupport.printEmojiSupportInfo();
         
         // 加载 FXML 文件
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/enhanced-chat-view.fxml"));
@@ -32,7 +30,7 @@ public class ChatApplication extends Application {
         // 加载 CSS 样式
         scene.getStylesheets().add(getClass().getResource("/css/enhanced-chat-style.css").toExternalForm());
 
-        scene.getStylesheets().add(getClass().getResource("/css/dynamic-emoji-fonts.css").toExternalForm());
+
         
         // 获取控制器并设置节点
         controller = fxmlLoader.getController();
