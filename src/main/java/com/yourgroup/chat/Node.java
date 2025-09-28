@@ -195,12 +195,31 @@ public class Node {
     }
     
     /**
-     * 发送聊天消息到所有连接的节点
+     * 发送群聊消息到所有连接的节点
      */
     public void sendChatMessage(String message) {
         Message chatMessage = new Message(Message.Type.CHAT, nodeId, message);
         messageRouter.broadcastMessage(chatMessage);
-        System.out.println("消息已广播到网络");
+        System.out.println("群聊消息已广播到网络");
+    }
+    
+    /**
+     * 发送私聊消息到指定节点
+     */
+    public void sendPrivateMessage(String targetNodeId, String message) {
+        Message privateMessage = new Message(Message.Type.PRIVATE_CHAT, nodeId, message, targetNodeId);
+        messageRouter.broadcastMessage(privateMessage);
+        System.out.println("私聊消息已发送给: " + targetNodeId);
+    }
+    
+    /**
+     * 发送文件传输请求
+     */
+    public void sendFileRequest(String targetNodeId, java.io.File file) {
+        String fileInfo = file.getName() + "|" + file.length();
+        Message fileRequest = new Message(Message.Type.FILE_REQUEST, nodeId, fileInfo, targetNodeId);
+        messageRouter.broadcastMessage(fileRequest);
+        System.out.println("文件传输请求已发送给: " + targetNodeId + ", 文件: " + file.getName());
     }
     
     /**
@@ -229,6 +248,13 @@ public class Node {
      */
     public Map<String, PeerConnection> getConnections() {
         return connections;
+    }
+    
+    /**
+     * 设置消息监听器
+     */
+    public void setMessageListener(MessageListener listener) {
+        messageRouter.setMessageListener(listener);
     }
     
     /**

@@ -8,7 +8,10 @@ import java.util.UUID;
 public class Message {
     public enum Type {
         HELLO,          // 握手消息
-        CHAT,           // 聊天消息
+        CHAT,           // 群聊消息
+        PRIVATE_CHAT,   // 私聊消息
+        FILE_TRANSFER,  // 文件传输
+        FILE_REQUEST,   // 文件传输请求
         PEER_LIST,      // 邻居列表共享
         PING,           // 心跳检测
         PONG            // 心跳响应
@@ -20,6 +23,7 @@ public class Message {
     private final String content;
     private final long timestamp;
     private int ttl; // Time To Live，防止消息无限传播
+    private String targetId; // 目标节点ID，用于私聊
     
     public Message(Type type, String senderId, String content) {
         this.messageId = UUID.randomUUID().toString();
@@ -28,6 +32,17 @@ public class Message {
         this.content = content;
         this.timestamp = System.currentTimeMillis();
         this.ttl = 10; // 默认最多转发10次
+        this.targetId = null; // 群聊消息无目标
+    }
+    
+    public Message(Type type, String senderId, String content, String targetId) {
+        this.messageId = UUID.randomUUID().toString();
+        this.type = type;
+        this.senderId = senderId;
+        this.content = content;
+        this.timestamp = System.currentTimeMillis();
+        this.ttl = 10; // 默认最多转发10次
+        this.targetId = targetId; // 私聊目标
     }
     
     public Message(String messageId, Type type, String senderId, String content, long timestamp, int ttl) {
@@ -37,14 +52,26 @@ public class Message {
         this.content = content;
         this.timestamp = timestamp;
         this.ttl = ttl;
+        this.targetId = null;
+    }
+    
+    public Message(String messageId, Type type, String senderId, String content, long timestamp, int ttl, String targetId) {
+        this.messageId = messageId;
+        this.type = type;
+        this.senderId = senderId;
+        this.content = content;
+        this.timestamp = timestamp;
+        this.ttl = ttl;
+        this.targetId = targetId;
     }
     
     /**
      * 将消息序列化为字符串格式
      */
     public String serialize() {
-        return String.format("%s|%s|%s|%s|%d|%d", 
-            messageId, type.name(), senderId, content, timestamp, ttl);
+        return String.format("%s|%s|%s|%s|%d|%d|%s", 
+            messageId, type.name(), senderId, content, timestamp, ttl, 
+            targetId != null ? targetId : "");
     }
     
     /**
@@ -52,8 +79,8 @@ public class Message {
      */
     public static Message deserialize(String data) {
         try {
-            String[] parts = data.split("\\|", 6);
-            if (parts.length != 6) {
+            String[] parts = data.split("\\|", 7);
+            if (parts.length < 6) {
                 throw new IllegalArgumentException("Invalid message format");
             }
             
@@ -63,8 +90,9 @@ public class Message {
             String content = parts[3];
             long timestamp = Long.parseLong(parts[4]);
             int ttl = Integer.parseInt(parts[5]);
+            String targetId = parts.length > 6 && !parts[6].isEmpty() ? parts[6] : null;
             
-            return new Message(messageId, type, senderId, content, timestamp, ttl);
+            return new Message(messageId, type, senderId, content, timestamp, ttl, targetId);
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to deserialize message: " + data, e);
         }
@@ -74,7 +102,7 @@ public class Message {
      * 创建消息的副本，TTL减1（用于转发）
      */
     public Message createForwardCopy() {
-        return new Message(messageId, type, senderId, content, timestamp, ttl - 1);
+        return new Message(messageId, type, senderId, content, timestamp, ttl - 1, targetId);
     }
     
     /**
@@ -91,6 +119,7 @@ public class Message {
     public String getContent() { return content; }
     public long getTimestamp() { return timestamp; }
     public int getTtl() { return ttl; }
+    public String getTargetId() { return targetId; }
     
     @Override
     public String toString() {

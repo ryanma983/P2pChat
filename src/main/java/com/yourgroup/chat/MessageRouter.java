@@ -11,6 +11,7 @@ public class MessageRouter {
     private final Node node;
     private final Set<String> processedMessages = new CopyOnWriteArraySet<>();
     private final Map<String, Long> messageTimestamps = new ConcurrentHashMap<>();
+    private MessageListener messageListener;
     
     // 清理过期消息记录的时间间隔（毫秒）
     private static final long CLEANUP_INTERVAL = 300000; // 5分钟
@@ -20,6 +21,13 @@ public class MessageRouter {
         this.node = node;
         // 启动定期清理线程
         startCleanupTask();
+    }
+    
+    /**
+     * 设置消息监听器
+     */
+    public void setMessageListener(MessageListener listener) {
+        this.messageListener = listener;
     }
     
     /**
@@ -41,6 +49,12 @@ public class MessageRouter {
                 break;
             case CHAT:
                 handleChatMessage(source, message);
+                break;
+            case PRIVATE_CHAT:
+                handlePrivateChatMessage(source, message);
+                break;
+            case FILE_REQUEST:
+                handleFileTransferRequest(source, message);
                 break;
             case PEER_LIST:
                 handlePeerListMessage(source, message);
@@ -96,8 +110,50 @@ public class MessageRouter {
      * 处理聊天消息
      */
     private void handleChatMessage(PeerConnection source, Message message) {
-        System.out.println(String.format("[聊天] %s: %s", 
+        System.out.println(String.format("[群聊] %s: %s", 
             message.getSenderId(), message.getContent()));
+        
+        // 通知GUI界面
+        if (messageListener != null) {
+            messageListener.onChatMessageReceived(message.getSenderId(), message.getContent());
+        }
+    }
+    
+    /**
+     * 处理私聊消息
+     */
+    private void handlePrivateChatMessage(PeerConnection source, Message message) {
+        // 检查消息是否是发给自己的
+        if (message.getTargetId() != null && message.getTargetId().equals(node.getNodeId())) {
+            System.out.println(String.format("[私聊] %s: %s", 
+                message.getSenderId(), message.getContent()));
+            
+            // 通知GUI界面
+            if (messageListener != null) {
+                messageListener.onPrivateChatMessageReceived(message.getSenderId(), message.getContent());
+            }
+        }
+        // 如果不是发给自己的，继续转发（在forwardMessage中处理）
+    }
+    
+    /**
+     * 处理文件传输请求
+     */
+    private void handleFileTransferRequest(PeerConnection source, Message message) {
+        // 解析文件信息
+        String[] parts = message.getContent().split("\\|");
+        if (parts.length >= 2) {
+            String fileName = parts[0];
+            long fileSize = Long.parseLong(parts[1]);
+            
+            System.out.println(String.format("[文件传输] %s 请求发送文件: %s (%d bytes)", 
+                message.getSenderId(), fileName, fileSize));
+            
+            // 通知GUI界面
+            if (messageListener != null) {
+                messageListener.onFileTransferRequest(message.getSenderId(), fileName, fileSize);
+            }
+        }
     }
     
     /**
