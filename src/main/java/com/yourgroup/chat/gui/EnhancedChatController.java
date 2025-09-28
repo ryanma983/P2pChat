@@ -30,9 +30,7 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
     // 左侧成员面板
     @FXML private ListView<OnlineMember> memberListView;
     @FXML private Label memberCountLabel;
-    @FXML private RadioButton groupChatRadio;
-    @FXML private RadioButton privateChatRadio;
-    @FXML private Label privateChatTargetLabel;
+    // 移除聊天模式选择相关控件
     
     // 右侧聊天面板
     @FXML private Label chatTitleLabel;
@@ -53,8 +51,6 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
     private ObservableList<ChatMessage> messages;
     private ObservableList<OnlineMember> onlineMembers;
     private Timer statusUpdateTimer;
-    private ToggleGroup chatModeGroup;
-    private OnlineMember selectedMember;
     private Map<String, PrivateChatWindow> privateChatWindows = new HashMap<>();
     private EmojiPicker emojiPicker;
     
@@ -69,10 +65,7 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
         messageListView.setCellFactory(listView -> new MessageListCell());
         memberListView.setItems(onlineMembers);
         
-        // 设置聊天模式单选按钮组
-        chatModeGroup = new ToggleGroup();
-        groupChatRadio.setToggleGroup(chatModeGroup);
-        privateChatRadio.setToggleGroup(chatModeGroup);
+        // 默认群聊模式，无需单选按钮
         
         // 设置消息输入框
         messageInput.setWrapText(true);
@@ -87,10 +80,7 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
         // 设置成员列表点击事件
         memberListView.setOnMouseClicked(this::handleMemberClick);
         
-        // 设置聊天模式切换事件
-        chatModeGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
-            updateChatMode();
-        });
+        // 移除聊天模式切换，默认群聊
         
         // 设置菜单项事件
         aboutMenuItem.setOnAction(e -> showAboutDialog());
@@ -140,11 +130,6 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
             // 双击打开私聊窗口
             if (event.getClickCount() == 2) {
                 openPrivateChatWindow(clickedMember);
-            } else {
-                // 单击切换到私聊模式
-                privateChatRadio.setSelected(true);
-                selectedMember = clickedMember;
-                updateChatMode();
             }
         }
     }
@@ -200,28 +185,7 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
         messageInput.requestFocus();
     }
     
-    /**
-     * 更新聊天模式
-     */
-    private void updateChatMode() {
-        if (groupChatRadio.isSelected()) {
-            // 群聊模式
-            chatTitleLabel.setText("群聊");
-            privateChatTargetLabel.setVisible(false);
-            selectedMember = null;
-        } else if (privateChatRadio.isSelected()) {
-            // 私聊模式
-            if (selectedMember != null) {
-                chatTitleLabel.setText("私聊 - " + selectedMember.getNodeId());
-                privateChatTargetLabel.setText("私聊对象: " + selectedMember.getNodeId());
-                privateChatTargetLabel.setVisible(true);
-            } else {
-                chatTitleLabel.setText("私聊 - 请选择对象");
-                privateChatTargetLabel.setText("私聊对象: 请在左侧选择成员");
-                privateChatTargetLabel.setVisible(true);
-            }
-        }
-    }
+    // updateChatMode方法已移除，默认群聊模式
     
     /**
      * 处理发送按钮点击
@@ -230,19 +194,9 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
     private void handleSendMessage() {
         String messageText = messageInput.getText().trim();
         if (!messageText.isEmpty() && chatNode != null) {
-            
-            if (groupChatRadio.isSelected()) {
-                // 发送群聊消息
-                addSentMessage(messageText, ChatMessage.MessageType.SENT);
-                chatNode.sendChatMessage(messageText);
-            } else if (privateChatRadio.isSelected() && selectedMember != null) {
-                // 发送私聊消息
-                addSentMessage("私聊给 " + selectedMember.getNodeId() + ": " + messageText, ChatMessage.MessageType.SENT);
-                chatNode.sendPrivateMessage(selectedMember.getNodeId(), messageText);
-            } else {
-                addSystemMessage("请选择聊天对象或切换到群聊模式");
-                return;
-            }
+            // 发送群聊消息
+            addSentMessage(messageText, ChatMessage.MessageType.SENT);
+            chatNode.sendChatMessage(messageText);
             
             // 清空输入框
             messageInput.clear();
@@ -259,13 +213,8 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
         File selectedFile = fileChooser.showOpenDialog(sendButton.getScene().getWindow());
         
         if (selectedFile != null) {
-            if (privateChatRadio.isSelected() && selectedMember != null) {
-                // 发送文件给选中的成员
-                addSystemMessage("正在发送文件 " + selectedFile.getName() + " 给 " + selectedMember.getNodeId());
-                chatNode.sendFileRequest(selectedMember.getNodeId(), selectedFile);
-            } else {
-                addSystemMessage("文件传输仅支持私聊模式，请先选择接收者");
-            }
+            // 文件传输功能暂时禁用，需要在私聊窗口中使用
+            addSystemMessage("文件传输请在私聊窗口中使用（双击成员名称打开私聊窗口）");
         }
     }
     
@@ -459,12 +408,7 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
             updateMemberCount();
             addSystemMessage("成员 " + nodeId + " 离开了聊天");
             
-            // 如果当前私聊对象离开了，切换回群聊
-            if (selectedMember != null && selectedMember.getNodeId().equals(nodeId)) {
-                groupChatRadio.setSelected(true);
-                selectedMember = null;
-                updateChatMode();
-            }
+            // 成员离开时的处理（已简化）
             
             // 更新对应私聊窗口的状态
             PrivateChatWindow privateChatWindow = privateChatWindows.get(nodeId);

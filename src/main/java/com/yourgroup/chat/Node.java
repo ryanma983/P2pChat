@@ -183,6 +183,12 @@ public class Node {
      */
     private void handlePeerConnection(PeerConnection connection) {
         try {
+            // 将连接添加到连接列表（对于入站连接）
+            if (connection.isInbound()) {
+                connections.put(connection.getAddress(), connection);
+                System.out.println("入站连接已添加: " + connection.getAddress());
+            }
+            
             String line;
             while ((line = connection.readMessage()) != null) {
                 connection.updateLastActivity();
@@ -195,6 +201,12 @@ public class Node {
             }
         } catch (IOException e) {
             System.out.println("与节点 " + connection.getAddress() + " 的连接断开");
+            
+            // 通知GUI成员离开
+            if (messageRouter.getMessageListener() != null) {
+                String nodeId = "Node-" + connection.getAddress().replace(":", "-");
+                messageRouter.getMessageListener().onMemberLeft(nodeId);
+            }
         } finally {
             connections.remove(connection.getAddress());
             connection.close();

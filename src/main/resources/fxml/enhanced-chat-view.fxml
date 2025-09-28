@@ -8,38 +8,37 @@
    <top>
       <!-- 菜单栏 -->
       <MenuBar>
-         <menus>
-            <Menu mnemonicParsing="false" text="文件">
-               <items>
-                  <MenuItem fx:id="settingsMenuItem" mnemonicParsing="false" text="设置" />
-                  <SeparatorMenuItem />
-                  <MenuItem mnemonicParsing="false" text="退出" />
-               </items>
-            </Menu>
-            <Menu mnemonicParsing="false" text="连接">
-               <items>
-                  <MenuItem mnemonicParsing="false" onAction="#handleConnect" text="连接到节点..." />
-               </items>
-            </Menu>
-            <Menu mnemonicParsing="false" text="帮助">
-               <items>
-                  <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" text="关于" />
-               </items>
-            </Menu>
-         </menus>
+        <menus>
+          <Menu mnemonicParsing="false" text="文件">
+            <items>
+              <MenuItem mnemonicParsing="false" text="退出" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="连接">
+            <items>
+              <MenuItem mnemonicParsing="false" text="连接到节点" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="帮助">
+            <items>
+              <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" text="关于" />
+              <MenuItem fx:id="settingsMenuItem" mnemonicParsing="false" text="设置" />
+            </items>
+          </Menu>
+        </menus>
       </MenuBar>
    </top>
-   
    <center>
+      <!-- 主要内容区域 -->
       <SplitPane dividerPositions="0.25" styleClass="main-split-pane">
          <items>
-            <!-- 左侧面板：在线成员列表 -->
+            <!-- 左侧面板：成员列表 -->
             <VBox spacing="5.0" styleClass="member-panel">
                <children>
                   <!-- 成员列表标题 -->
-                  <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="panel-header">
+                  <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="member-header">
                      <children>
-                        <Label text="在线成员" styleClass="panel-title" />
+                        <Label text="在线成员" styleClass="section-title" />
                         <Label fx:id="memberCountLabel" text="(0)" styleClass="member-count" />
                      </children>
                      <padding>
@@ -55,24 +54,11 @@
                   </ListView>
                   
                   <!-- 操作提示 -->
-                  <Label text="提示: 双击成员名称打开私聊窗口" styleClass="hint-label">
-                     <padding>
-                        <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
-                     </padding>
-                  </Label>
-                  
-                  <!-- 聊天模式选择 -->
-                  <VBox spacing="5.0" styleClass="chat-mode-panel">
-                     <children>
-                        <Label text="聊天模式:" styleClass="mode-label" />
-                        <RadioButton fx:id="groupChatRadio" selected="true" text="群聊模式" />
-                        <RadioButton fx:id="privateChatRadio" text="私聊模式" />
-                        <Label fx:id="privateChatTargetLabel" text="私聊对象: 无" styleClass="target-label" visible="false" />
-                     </children>
+                  <Label text="双击成员名称打开私聊窗口" styleClass="hint-label">
                      <padding>
                         <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
                      </padding>
-                  </VBox>
+                  </Label>
                </children>
             </VBox>
             
@@ -119,7 +105,7 @@
                               </VBox>
                            </children>
                            <padding>
-                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
                            </padding>
                         </HBox>
                      </children>
