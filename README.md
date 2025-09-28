@@ -1,6 +1,6 @@
 # P2P 去中心化聊天应用
 
-一个使用 Java 和 JavaFX 开发的现代化去中心化聊天应用，支持群聊、私聊、文件传输和表情功能。
+一个使用 Java 和 JavaFX 开发的现代化去中心化聊天应用，支持群聊、私聊和文件传输功能。
 
 ## ✨ 功能特性
 
@@ -12,9 +12,9 @@
 
 ### 🎨 用户界面
 - **现代化设计** - 类似 Telegram/Discord 的专业界面
-- **表情支持** - 160+个表情，4个分类（笑脸、手势、物品、符号）
 - **多窗口支持** - 可同时进行多个私聊对话
 - **响应式布局** - 适应不同窗口大小
+- **简洁界面** - 专注于核心聊天功能
 
 ### 🔧 技术特性
 - **去中心化网络** - P2P 节点通信，无需中央服务器
@@ -66,12 +66,7 @@
    - 在左侧成员列表中双击任意在线成员
    - 在弹出的私聊窗口中发送消息
 
-3. **发送表情**
-   - 点击输入框旁边的 😊 按钮
-   - 在表情选择器中选择表情
-   - 表情会插入到光标位置
-
-4. **发送文件**
+3. **发送文件**
    - 点击 📁 文件按钮
    - 选择要发送的文件
    - 接收方会收到确认对话框
@@ -97,13 +92,17 @@ P2pChat/
 │       ├── ChatApplication.java     # JavaFX 应用主类
 │       ├── EnhancedChatController.java # 主界面控制器
 │       ├── PrivateChatWindow.java   # 私聊窗口
-│       ├── EmojiPicker.java         # 表情选择器
 │       ├── ChatMessage.java         # 聊天消息模型
 │       ├── OnlineMember.java        # 在线成员模型
 │       └── MessageListCell.java     # 消息列表单元格
 ├── src/main/resources/
 │   ├── fxml/                        # FXML 界面文件
 │   └── css/                         # CSS 样式文件
+├── docs/                            # 📚 技术文档和开发报告
+│   ├── README.md                    # 文档中心索引
+│   ├── FIXES_REPORT.md              # 主要修复报告
+│   ├── FILE_TRANSFER_FIXES.md       # 文件传输修复详情
+│   └── ...                         # 其他技术文档和历史记录
 ├── pom.xml                          # Maven 配置
 ├── README.md                        # 项目说明
 └── TEST_GUIDE.md                    # 测试指南
