@@ -227,7 +227,9 @@ public class Node {
      */
     public void sendPrivateMessage(String targetNodeId, String message) {
         Message privateMessage = new Message(Message.Type.PRIVATE_CHAT, nodeId, message, targetNodeId);
-        messageRouter.broadcastMessage(privateMessage);
+        
+        // 直接处理消息（包括本地处理和转发）
+        messageRouter.handleMessage(null, privateMessage);
         System.out.println("私聊消息已发送给: " + targetNodeId);
     }
     

@@ -14,11 +14,7 @@
               <MenuItem mnemonicParsing="false" text="退出" />
             </items>
           </Menu>
-          <Menu mnemonicParsing="false" text="连接">
-            <items>
-              <MenuItem mnemonicParsing="false" text="连接到节点" />
-            </items>
-          </Menu>
+
           <Menu mnemonicParsing="false" text="帮助">
             <items>
               <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" text="关于" />
@@ -90,7 +86,7 @@
                         <Separator />
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                            <children>
-                              <TextArea fx:id="messageInput" prefRowCount="2" promptText="输入消息... (Enter发送, Ctrl+Enter换行)" HBox.hgrow="ALWAYS" />
+                              <TextArea fx:id="messageInput" prefRowCount="2" promptText="输入消息... (Enter发送, Shift+Enter换行)" HBox.hgrow="ALWAYS" />
                               <VBox alignment="CENTER" spacing="5.0">
                                  <children>
                                     <Button fx:id="sendButton" defaultButton="true" onAction="#handleSendMessage" prefWidth="80.0" text="发送" />

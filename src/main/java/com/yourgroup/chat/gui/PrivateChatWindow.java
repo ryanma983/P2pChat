@@ -158,9 +158,10 @@ public class PrivateChatWindow {
     
     private void handleKeyPressed(javafx.scene.input.KeyEvent event) {
         if (event.getCode() == KeyCode.ENTER) {
-            if (event.isControlDown()) {
-                // Ctrl+Enter 换行
+            if (event.isShiftDown()) {
+                // Shift+Enter 换行
                 messageInput.appendText("\n");
+                event.consume();
             } else {
                 // Enter 发送消息
                 event.consume();

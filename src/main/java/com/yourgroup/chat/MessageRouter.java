@@ -131,6 +131,9 @@ public class MessageRouter {
      * 处理私聊消息
      */
     private void handlePrivateChatMessage(PeerConnection source, Message message) {
+        System.out.println(String.format("[调试] 收到私聊消息 - 发送者: %s, 目标: %s, 自己: %s", 
+            message.getSenderId(), message.getTargetId(), node.getNodeId()));
+        
         // 检查消息是否是发给自己的
         if (message.getTargetId() != null && message.getTargetId().equals(node.getNodeId())) {
             System.out.println(String.format("[私聊] %s: %s", 
@@ -140,6 +143,8 @@ public class MessageRouter {
             if (messageListener != null) {
                 messageListener.onPrivateChatMessageReceived(message.getSenderId(), message.getContent());
             }
+        } else {
+            System.out.println("[调试] 私聊消息不是发给自己的，将转发");
         }
         // 如果不是发给自己的，继续转发（在forwardMessage中处理）
     }
