@@ -1,6 +1,7 @@
 com/yourgroup/chat/gui/OnlineMember.class
 com/yourgroup/chat/gui/MessageListCell.class
 com/yourgroup/chat/MessageRouter$1.class
+com/yourgroup/chat/gui/DiscordEmojiPicker.class
 com/yourgroup/chat/gui/MessageListCell$1.class
 com/yourgroup/chat/gui/ChatMessage$MessageType.class
 com/yourgroup/chat/Message.class

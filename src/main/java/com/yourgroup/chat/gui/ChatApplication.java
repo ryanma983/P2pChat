@@ -26,7 +26,7 @@ public class ChatApplication extends Application {
         
         // 加载 CSS 样式
         scene.getStylesheets().add(getClass().getResource("/css/enhanced-chat-style.css").toExternalForm());
-        scene.getStylesheets().add(getClass().getResource("/css/emoji-picker-style.css").toExternalForm());
+        scene.getStylesheets().add(getClass().getResource("/css/discord-emoji-style.css").toExternalForm());
         
         // 获取控制器并设置节点
         controller = fxmlLoader.getController();

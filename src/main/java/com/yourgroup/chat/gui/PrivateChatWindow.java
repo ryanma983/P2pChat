@@ -32,7 +32,7 @@ public class PrivateChatWindow {
     private Button fileButton;
     private Button emojiButton;
     private Label statusLabel;
-    private EmojiPicker emojiPicker;
+    private DiscordEmojiPicker emojiPicker;
     
     public PrivateChatWindow(Node chatNode, OnlineMember targetMember) {
         this.chatNode = chatNode;
@@ -69,7 +69,7 @@ public class PrivateChatWindow {
         stage.setScene(scene);
         
         // 初始化表情选择器
-        emojiPicker = new EmojiPicker(this::insertEmoji);
+        emojiPicker = new DiscordEmojiPicker(this::insertEmoji);
         
         // 设置窗口关闭事件
         stage.setOnCloseRequest(e -> {
@@ -174,9 +174,9 @@ public class PrivateChatWindow {
         if (emojiPicker.isShowing()) {
             emojiPicker.hide();
         } else {
-            // 计算表情选择器的显示位置
+            // 计算表情选择器的显示位置（Discord风格的表情选择器更大）
             double x = emojiButton.localToScreen(emojiButton.getBoundsInLocal()).getMinX();
-            double y = emojiButton.localToScreen(emojiButton.getBoundsInLocal()).getMinY() - 260;
+            double y = emojiButton.localToScreen(emojiButton.getBoundsInLocal()).getMinY() - 360;
             emojiPicker.show(emojiButton, x, y);
         }
     }

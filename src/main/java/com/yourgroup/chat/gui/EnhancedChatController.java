@@ -52,7 +52,7 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
     private ObservableList<OnlineMember> onlineMembers;
     private Timer statusUpdateTimer;
     private Map<String, PrivateChatWindow> privateChatWindows = new HashMap<>();
-    private EmojiPicker emojiPicker;
+    private DiscordEmojiPicker emojiPicker;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -87,7 +87,7 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
         settingsMenuItem.setOnAction(e -> showSettingsDialog());
         
         // 初始化表情选择器
-        emojiPicker = new EmojiPicker(this::insertEmoji);
+        emojiPicker = new DiscordEmojiPicker(this::insertEmoji);
         emojiButton.setOnAction(e -> handleEmojiButton());
         
         // 添加欢迎消息
@@ -166,9 +166,9 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
         if (emojiPicker.isShowing()) {
             emojiPicker.hide();
         } else {
-            // 计算表情选择器的显示位置
+            // 计算表情选择器的显示位置（Discord风格的表情选择器更大）
             double x = emojiButton.localToScreen(emojiButton.getBoundsInLocal()).getMinX();
-            double y = emojiButton.localToScreen(emojiButton.getBoundsInLocal()).getMinY() - 260;
+            double y = emojiButton.localToScreen(emojiButton.getBoundsInLocal()).getMinY() - 360;
             emojiPicker.show(emojiButton, x, y);
         }
     }
