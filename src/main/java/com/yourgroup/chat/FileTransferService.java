@@ -78,30 +78,37 @@ public class FileTransferService {
      * 处理文件传输连接
      */
     private void handleFileTransferConnection(Socket socket) {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-             InputStream fileInput = socket.getInputStream();
-             OutputStream fileOutput = socket.getOutputStream()) {
+        try {
+            // 获取输入流
+            InputStream inputStream = socket.getInputStream();
             
-            // 读取传输头信息
-            String header = reader.readLine();
+            // 读取传输头信息（读取到换行符为止）
+            StringBuilder headerBuilder = new StringBuilder();
+            int b;
+            while ((b = inputStream.read()) != -1 && b != '\n') {
+                headerBuilder.append((char) b);
+            }
+            
+            String header = headerBuilder.toString().trim();
             System.out.println("[文件传输] 收到传输头: " + header);
             
             String[] parts = header.split(":");
-            if (parts.length >= 4) {
+            if (parts.length >= 5) {
                 String action = parts[0];
                 String sessionId = parts[1];
                 String fileName = parts[2];
                 long fileSize = Long.parseLong(parts[3]);
+                String savePath = parts[4];
                 
                 if ("SEND".equals(action)) {
-                    // 接收文件
-                    receiveFile(socket, sessionId, fileName, fileSize);
+                    // 接收文件，使用传输头中的保存路径
+                    receiveFileDirectly(socket, sessionId, fileName, fileSize, savePath);
                 }
             }
             
         } catch (IOException e) {
             System.err.println("处理文件传输连接时发生错误: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
@@ -127,14 +134,17 @@ public class FileTransferService {
                 System.out.println("[文件传输] 开始发送文件到 " + targetNodeId + " (" + host + ":" + targetPort + ")");
                 
                 try (Socket socket = new Socket(host, targetPort);
-                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
                      FileInputStream fileInput = new FileInputStream(file)) {
                     
-                    // 发送传输头
-                    String header = String.format("SEND:%s:%s:%d:%s", sessionId, file.getName(), file.length(), savePath);
-                    writer.write(header);
-                    writer.newLine();
-                    writer.flush();
+                    // 获取输出流
+                    OutputStream outputStream = socket.getOutputStream();
+                    
+                    // 发送传输头（使用字节流发送，确保编码一致）
+                    String header = String.format("SEND:%s:%s:%d:%s\n", sessionId, file.getName(), file.length(), savePath);
+                    outputStream.write(header.getBytes("UTF-8"));
+                    outputStream.flush();
+                    
+                    System.out.println("[文件传输] 发送头信息: " + header.trim());
                     
                     // 发送文件数据
                     byte[] buffer = new byte[8192];
@@ -142,17 +152,17 @@ public class FileTransferService {
                     long totalSent = 0;
                     
                     while ((bytesRead = fileInput.read(buffer)) != -1) {
-                        socket.getOutputStream().write(buffer, 0, bytesRead);
+                        outputStream.write(buffer, 0, bytesRead);
                         totalSent += bytesRead;
                         
                         // 显示进度
                         int progress = (int) ((totalSent * 100) / file.length());
-                        if (totalSent % (8192 * 10) == 0) { // 每传输约80KB显示一次进度
-                            System.out.println("[文件传输] 进度: " + progress + "% (" + totalSent + "/" + file.length() + " bytes)");
+                        if (totalSent % (8192 * 10) == 0 || totalSent == file.length()) { // 每传输约80KB或完成时显示进度
+                            System.out.println("[文件传输] 发送进度: " + progress + "% (" + totalSent + "/" + file.length() + " bytes)");
                         }
                     }
                     
-                    socket.getOutputStream().flush();
+                    outputStream.flush();
                     System.out.println("[文件传输] 文件发送完成: " + file.getName() + " (" + totalSent + " bytes)");
                     
                     // 通知GUI
@@ -177,31 +187,14 @@ public class FileTransferService {
     }
     
     /**
-     * 接收文件
+     * 直接接收文件数据
      */
-    private void receiveFile(Socket socket, String sessionId, String fileName, long fileSize) {
+    private void receiveFileDirectly(Socket socket, String sessionId, String fileName, long fileSize, String savePath) {
         try {
-            // 从会话中获取保存路径
-            FileTransferSession session = activeSessions.get(sessionId);
-            String savePath;
-            if (session != null) {
-                savePath = session.getSavePath();
-            } else {
-                // 如果没有会话信息，使用默认路径
-                String userHome = System.getProperty("user.home");
-                String defaultDownloadDir = userHome + File.separator + "P2PChat_Downloads";
-                new File(defaultDownloadDir).mkdirs();
-                savePath = defaultDownloadDir + File.separator + fileName;
-            }
-            
             System.out.println("[文件传输] 开始接收文件: " + fileName + " → " + savePath);
             
-            // 跳过HTTP头部分，直接读取文件数据
+            // 直接从socket获取输入流，不要重新创建BufferedReader
             InputStream inputStream = socket.getInputStream();
-            
-            // 先读取并跳过头信息行
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            reader.readLine(); // 跳过头信息
             
             // 创建目标文件
             File targetFile = new File(savePath);
@@ -212,6 +205,7 @@ public class FileTransferService {
                 int bytesRead;
                 long totalReceived = 0;
                 
+                // 直接读取文件数据，不跳过任何内容
                 while (totalReceived < fileSize && (bytesRead = inputStream.read(buffer)) != -1) {
                     int bytesToWrite = (int) Math.min(bytesRead, fileSize - totalReceived);
                     fileOutput.write(buffer, 0, bytesToWrite);
@@ -219,7 +213,7 @@ public class FileTransferService {
                     
                     // 显示进度
                     int progress = (int) ((totalReceived * 100) / fileSize);
-                    if (totalReceived % (8192 * 10) == 0) { // 每接收约80KB显示一次进度
+                    if (totalReceived % (8192 * 10) == 0 || totalReceived == fileSize) { // 每接收约80KB或完成时显示进度
                         System.out.println("[文件传输] 接收进度: " + progress + "% (" + totalReceived + "/" + fileSize + " bytes)");
                     }
                 }
@@ -227,6 +221,11 @@ public class FileTransferService {
                 fileOutput.flush();
                 System.out.println("[文件传输] 文件接收完成: " + fileName + " (" + totalReceived + " bytes)");
                 System.out.println("[文件传输] 保存位置: " + savePath);
+                
+                // 验证文件大小
+                if (totalReceived != fileSize) {
+                    System.err.println("[文件传输] 警告：接收的文件大小不匹配！期望: " + fileSize + ", 实际: " + totalReceived);
+                }
                 
                 // 通知GUI
                 if (node.getMessageRouter().getMessageListener() != null) {
@@ -241,6 +240,7 @@ public class FileTransferService {
             
         } catch (IOException e) {
             System.err.println("接收文件失败: " + e.getMessage());
+            e.printStackTrace();
             if (node.getMessageRouter().getMessageListener() != null) {
                 node.getMessageRouter().getMessageListener().onSystemMessage(
                     "文件接收失败: " + fileName + " - " + e.getMessage());
