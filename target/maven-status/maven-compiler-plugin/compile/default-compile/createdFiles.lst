@@ -10,9 +10,11 @@ com/yourgroup/chat/PeerConnection.class
 com/yourgroup/chat/Message$Type.class
 com/yourgroup/chat/MessageRouter.class
 com/yourgroup/chat/Node$1.class
+com/yourgroup/chat/util/EmojiSupport.class
 com/yourgroup/chat/gui/EnhancedChatController.class
 com/yourgroup/chat/MessageListener.class
 com/yourgroup/chat/Node.class
+com/yourgroup/chat/test/EmojiTestApp.class
 com/yourgroup/chat/gui/EnhancedChatController$1.class
 com/yourgroup/chat/MessageRouter$2.class
 com/yourgroup/chat/gui/ChatApplication.class

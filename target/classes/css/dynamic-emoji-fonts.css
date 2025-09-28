@@ -1,0 +1,134 @@
+/* 动态表情字体配置 - 根据系统自动选择最佳字体 */
+
+/* 全局表情字体设置 */
+.root {
+    -fx-font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne Color", "Twemoji Mozilla", "Segoe UI Symbol", "Symbola", "DejaVu Sans", sans-serif;
+}
+
+/* 表情按钮专用字体 */
+.emoji-button, .compatible-emoji-btn, .discord-emoji-btn {
+    -fx-font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne Color", "Twemoji Mozilla", "Segoe UI Symbol", "Symbola", "DejaVu Sans", monospace;
+    -fx-font-size: 18px;
+}
+
+/* 消息中的表情 */
+.message-content {
+    -fx-font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne Color", "Twemoji Mozilla", "Segoe UI Symbol", "Symbola", "DejaVu Sans", "Microsoft YaHei", sans-serif;
+}
+
+/* 输入框中的表情 */
+.text-area, .text-field {
+    -fx-font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne Color", "Twemoji Mozilla", "Segoe UI Symbol", "Symbola", "DejaVu Sans", "Microsoft YaHei", sans-serif;
+}
+
+/* Windows系统优化 */
+@media (os: windows) {
+    .emoji-button, .compatible-emoji-btn, .discord-emoji-btn {
+        -fx-font-family: "Segoe UI Emoji", "Segoe UI Symbol", "Microsoft YaHei", sans-serif;
+    }
+}
+
+/* macOS系统优化 */
+@media (os: mac) {
+    .emoji-button, .compatible-emoji-btn, .discord-emoji-btn {
+        -fx-font-family: "Apple Color Emoji", "SF Pro Display", "Helvetica Neue", sans-serif;
+    }
+}
+
+/* Linux系统优化 */
+@media (os: linux) {
+    .emoji-button, .compatible-emoji-btn, .discord-emoji-btn {
+        -fx-font-family: "Noto Color Emoji", "Noto Sans", "DejaVu Sans", sans-serif;
+    }
+}
+
+/* 高DPI显示优化 */
+@media (resolution: high) {
+    .emoji-button, .compatible-emoji-btn, .discord-emoji-btn {
+        -fx-font-size: 20px;
+        -fx-font-smoothing-type: lcd;
+    }
+}
+
+/* 表情渲染优化 */
+.emoji-text {
+    -fx-font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne Color";
+    -fx-font-size: 16px;
+    -fx-text-fill: transparent;
+    -fx-background-color: transparent;
+    -fx-font-smoothing-type: lcd;
+}
+
+/* 备用文字表情样式 */
+.text-emoji {
+    -fx-font-family: "Consolas", "Monaco", "Courier New", "Lucida Console", monospace;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #7289da;
+}
+
+/* 表情选择器中的表情 */
+.emoji-picker .emoji-button {
+    -fx-font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne Color", "Twemoji Mozilla", "Segoe UI Symbol", "Symbola", "DejaVu Sans", monospace;
+    -fx-font-size: 22px;
+    -fx-text-alignment: center;
+    -fx-alignment: center;
+}
+
+/* 表情工具提示 */
+.emoji-tooltip {
+    -fx-font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI", "Microsoft YaHei", sans-serif;
+    -fx-font-size: 12px;
+}
+
+/* 表情搜索框 */
+.emoji-search {
+    -fx-font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Segoe UI", "Microsoft YaHei", sans-serif;
+}
+
+/* 表情分类按钮 */
+.emoji-category-button {
+    -fx-font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne Color", "Consolas", "Monaco", monospace;
+    -fx-font-size: 18px;
+    -fx-text-alignment: center;
+    -fx-alignment: center;
+}
+
+/* 聊天消息中的表情优化 */
+.chat-message .emoji {
+    -fx-font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne Color";
+    -fx-font-size: 18px;
+    -fx-text-fill: transparent;
+    -fx-background-color: transparent;
+}
+
+/* 私聊窗口表情 */
+.private-chat .emoji {
+    -fx-font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne Color";
+    -fx-font-size: 16px;
+}
+
+/* 表情动画支持 */
+.emoji-animated {
+    -fx-font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne Color";
+    -fx-transition: all 0.2s ease;
+}
+
+.emoji-animated:hover {
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
+}
+
+/* 表情无障碍支持 */
+.emoji-accessible {
+    -fx-font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "EmojiOne Color", "Segoe UI Symbol", "Symbola";
+    -fx-font-size: 16px;
+    -fx-text-fill: inherit;
+}
+
+/* 表情回退机制 */
+.emoji-fallback {
+    -fx-font-family: "Consolas", "Monaco", "Courier New", "Lucida Console", monospace;
+    -fx-font-weight: bold;
+    -fx-text-fill: #7289da;
+}
