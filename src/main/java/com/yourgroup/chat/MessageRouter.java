@@ -184,16 +184,29 @@ public class MessageRouter {
      */
     private void handlePeerListMessage(PeerConnection source, Message message) {
         String[] peers = message.getContent().split(",");
-        System.out.println("收到邻居列表，包含 " + peers.length + " 个节点");
+        System.out.println("[调试] 收到邻居列表，包含 " + peers.length + " 个节点: " + message.getContent());
         
         for (String peer : peers) {
-            peer = peer.trim();
-            if (!peer.isEmpty() && !peer.equals("localhost:" + node.getPort())) {
+            String trimmedPeer = peer.trim();
+            if (!trimmedPeer.isEmpty() && !trimmedPeer.equals("localhost:" + node.getPort())) {
                 // 尝试连接到新发现的节点
-                if (!node.getConnections().containsKey(peer)) {
-                    System.out.println("发现新节点，尝试连接: " + peer);
-                    node.connectToPeer(peer);
+                if (!node.getConnections().containsKey(trimmedPeer)) {
+                    System.out.println("[调试] 发现新节点，尝试连接: " + trimmedPeer);
+                    // 延迟一点时间再连接，避免连接冲突
+                    final String finalPeer = trimmedPeer;
+                    new Thread(() -> {
+                        try {
+                            Thread.sleep(1000); // 等待1秒
+                            node.connectToPeer(finalPeer);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }).start();
+                } else {
+                    System.out.println("[调试] 节点 " + trimmedPeer + " 已经连接");
                 }
+            } else {
+                System.out.println("[调试] 跳过节点: " + trimmedPeer + " (空或自己)");
             }
         }
     }
@@ -221,6 +234,8 @@ public class MessageRouter {
     private void sendPeerList(PeerConnection target) {
         Set<String> peers = node.getConnections().keySet();
         String peerList = String.join(",", peers);
+        
+        System.out.println("[调试] 发送邻居列表给 " + target.getAddress() + ": " + peerList);
         
         Message peerListMessage = new Message(Message.Type.PEER_LIST, node.getNodeId(), peerList);
         target.sendMessage(peerListMessage.serialize());

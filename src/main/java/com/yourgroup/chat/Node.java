@@ -127,6 +127,11 @@ public class Node {
             
             System.out.println("成功连接到节点: " + address);
             
+            // 通知GUI更新连接数
+            if (messageRouter.getMessageListener() != null) {
+                messageRouter.getMessageListener().onConnectionStatusChanged(connections.size());
+            }
+            
             // 发送握手消息
             Message helloMessage = new Message(Message.Type.HELLO, nodeId, nodeId + ":" + port);
             connection.sendMessage(helloMessage.serialize());
@@ -184,6 +189,11 @@ public class Node {
             if (connection.isInbound()) {
                 connections.put(connection.getAddress(), connection);
                 System.out.println("入站连接已添加: " + connection.getAddress());
+                
+                // 通知GUI更新连接数
+                if (messageRouter.getMessageListener() != null) {
+                    messageRouter.getMessageListener().onConnectionStatusChanged(connections.size());
+                }
             }
             
             String line;
@@ -207,6 +217,11 @@ public class Node {
         } finally {
             connections.remove(connection.getAddress());
             connection.close();
+            
+            // 通知GUI更新连接数
+            if (messageRouter.getMessageListener() != null) {
+                messageRouter.getMessageListener().onConnectionStatusChanged(connections.size());
+            }
         }
     }
     
