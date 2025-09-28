@@ -216,10 +216,30 @@ public class Node {
         } catch (IOException e) {
             System.out.println("与节点 " + connection.getAddress() + " 的连接断开");
             
-            // 通知GUI成员离开
+            // 通知GUI成员离开 - 需要找到真实的节点ID
             if (messageRouter.getMessageListener() != null) {
-                String nodeId = "Node-" + connection.getAddress().replace(":", "-");
-                messageRouter.getMessageListener().onMemberLeft(nodeId);
+                // 从节点地址映射中找到对应的节点ID
+                String disconnectedNodeId = null;
+                for (Map.Entry<String, String> entry : nodeAddresses.entrySet()) {
+                    if (entry.getValue().equals(connection.getAddress()) || 
+                        connection.getAddress().contains(entry.getValue().split(":")[1])) {
+                        disconnectedNodeId = entry.getKey();
+                        break;
+                    }
+                }
+                
+                if (disconnectedNodeId != null) {
+                    messageRouter.getMessageListener().onMemberLeft(disconnectedNodeId);
+                    // 清理MessageRouter中的连接记录
+                    messageRouter.cleanupDisconnectedNode(disconnectedNodeId, connection.getAddress());
+                    // 从地址映射中移除
+                    nodeAddresses.remove(disconnectedNodeId);
+                } else {
+                    // 如果找不到对应的节点ID，使用地址作为备用
+                    String fallbackNodeId = "Node-" + connection.getAddress().replace(":", "-");
+                    messageRouter.getMessageListener().onMemberLeft(fallbackNodeId);
+                    messageRouter.cleanupDisconnectedNode(fallbackNodeId, connection.getAddress());
+                }
             }
         } finally {
             connections.remove(connection.getAddress());
@@ -253,13 +273,23 @@ public class Node {
     }
     
     /**
-     * 发送文件传输请求
+     * 发送文件传输请求（私聊）
      */
     public void sendFileRequest(String targetNodeId, java.io.File file) {
-        String fileInfo = file.getName() + "|" + file.length();
+        String fileInfo = file.getName() + ":" + file.length(); // 使用冒号分隔符
         Message fileRequest = new Message(Message.Type.FILE_REQUEST, nodeId, fileInfo, targetNodeId);
         messageRouter.broadcastMessage(fileRequest);
         System.out.println("文件传输请求已发送给: " + targetNodeId + ", 文件: " + file.getName());
+    }
+    
+    /**
+     * 发送群聊文件请求
+     */
+    public void sendGroupFileRequest(java.io.File file) {
+        String fileInfo = file.getName() + ":" + file.length(); // 使用冒号分隔符
+        Message fileRequest = new Message(Message.Type.FILE_REQUEST, nodeId, fileInfo);
+        messageRouter.broadcastMessage(fileRequest);
+        System.out.println("群聊文件请求已广播到网络, 文件: " + file.getName());
     }
     
     /**

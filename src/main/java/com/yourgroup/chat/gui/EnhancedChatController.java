@@ -212,9 +212,54 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
         fileChooser.setTitle("选择要发送的文件");
         File selectedFile = fileChooser.showOpenDialog(sendButton.getScene().getWindow());
         
-        if (selectedFile != null) {
-            // 文件传输功能暂时禁用，需要在私聊窗口中使用
-            addSystemMessage("文件传输请在私聊窗口中使用（双击成员名称打开私聊窗口）");
+        if (selectedFile != null && chatNode != null) {
+            // 检查文件大小限制（例如100MB）
+            long maxFileSize = 100 * 1024 * 1024; // 100MB
+            if (selectedFile.length() > maxFileSize) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("文件过大");
+                alert.setHeaderText("文件大小超过限制");
+                alert.setContentText("文件大小不能超过 100MB");
+                alert.showAndWait();
+                return;
+            }
+            
+            // 显示确认对话框
+            Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmAlert.setTitle("发送文件到群聊");
+            confirmAlert.setHeaderText("确认发送文件");
+            confirmAlert.setContentText(String.format("文件名: %s\n文件大小: %.2f MB\n\n确定要发送到群聊吗？", 
+                selectedFile.getName(), selectedFile.length() / (1024.0 * 1024.0)));
+            
+            Optional<ButtonType> result = confirmAlert.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                // 发送群聊文件请求
+                sendGroupFileRequest(selectedFile);
+            }
+        }
+    }
+    
+    /**
+     * 发送群聊文件请求
+     */
+    private void sendGroupFileRequest(File file) {
+        try {
+            // 创建文件信息字符串
+            String fileInfo = String.format("%s:%d", file.getName(), file.length());
+            
+            // 发送群聊文件请求消息
+            chatNode.sendGroupFileRequest(file);
+            
+            // 在界面显示文件发送信息
+            addSentMessage(String.format("[文件] %s (%.2f MB)", 
+                file.getName(), file.length() / (1024.0 * 1024.0)), 
+                ChatMessage.MessageType.SENT);
+            
+            addSystemMessage("群聊文件请求已发送: " + file.getName());
+            
+        } catch (Exception e) {
+            addSystemMessage("发送文件失败: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
@@ -354,14 +399,24 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
     @Override
     public void onFileTransferRequest(String senderId, String fileName, long fileSize) {
         Platform.runLater(() -> {
+            // 格式化文件大小显示
+            String fileSizeStr;
+            if (fileSize < 1024) {
+                fileSizeStr = fileSize + " bytes";
+            } else if (fileSize < 1024 * 1024) {
+                fileSizeStr = String.format("%.2f KB", fileSize / 1024.0);
+            } else {
+                fileSizeStr = String.format("%.2f MB", fileSize / (1024.0 * 1024.0));
+            }
+            
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("文件传输请求");
             alert.setHeaderText(senderId + " 想要发送文件给你");
-            alert.setContentText("文件名: " + fileName + "\n文件大小: " + fileSize + " bytes\n\n是否接受?");
+            alert.setContentText("文件名: " + fileName + "\n文件大小: " + fileSizeStr + "\n\n是否接受?");
             
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
-                addSystemMessage("已接受来自 " + senderId + " 的文件: " + fileName);
+                addSystemMessage("已接受来自 " + senderId + " 的文件: " + fileName + " (" + fileSizeStr + ")");
                 
                 // 如果有对应的私聊窗口，也在私聊窗口中显示
                 PrivateChatWindow privateChatWindow = privateChatWindows.get(senderId);
@@ -371,7 +426,7 @@ public class EnhancedChatController implements Initializable, com.yourgroup.chat
                 
                 // TODO: 实现实际的文件接收逻辑
             } else {
-                addSystemMessage("已拒绝来自 " + senderId + " 的文件: " + fileName);
+                addSystemMessage("已拒绝来自 " + senderId + " 的文件: " + fileName + " (" + fileSizeStr + ")");
             }
         });
     }

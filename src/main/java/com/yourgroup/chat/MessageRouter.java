@@ -107,15 +107,6 @@ public class MessageRouter {
         String senderId = message.getSenderId();
         System.out.println("[调试] 收到握手消息，来自节点: " + senderId + ", 地址: " + source.getAddress());
         
-        // 检查是否已经处理过这个节点
-        if (processedNodes.contains(senderId)) {
-            System.out.println("[调试] 节点 " + senderId + " 已经处理过，跳过重复处理");
-            return;
-        }
-        
-        // 标记节点为已处理
-        processedNodes.add(senderId);
-        
         // 解析握手消息中的节点地址信息
         String content = message.getContent();
         if (content.contains(":")) {
@@ -127,12 +118,23 @@ public class MessageRouter {
             }
         }
         
-        // 通知GUI有新成员加入
-        if (messageListener != null) {
-            System.out.println("[调试] 通知GUI添加成员: " + senderId);
-            messageListener.onMemberJoined(senderId, source.getAddress());
+        // 检查是否是新的连接（基于连接地址而不是节点ID）
+        String connectionKey = senderId + "@" + source.getAddress();
+        boolean isNewConnection = !processedNodes.contains(connectionKey);
+        
+        if (isNewConnection) {
+            // 标记这个连接为已处理
+            processedNodes.add(connectionKey);
+            
+            // 通知GUI有新成员加入
+            if (messageListener != null) {
+                System.out.println("[调试] 通知GUI添加成员: " + senderId);
+                messageListener.onMemberJoined(senderId, source.getAddress());
+            } else {
+                System.out.println("[调试] messageListener 为 null，无法通知GUI");
+            }
         } else {
-            System.out.println("[调试] messageListener 为 null，无法通知GUI");
+            System.out.println("[调试] 连接 " + connectionKey + " 已经处理过，跳过重复处理");
         }
         
         // 如果这是入站连接，回复握手消息
@@ -185,19 +187,40 @@ public class MessageRouter {
      * 处理文件传输请求
      */
     private void handleFileTransferRequest(PeerConnection source, Message message) {
-        // 解析文件信息
-        String[] parts = message.getContent().split("\\|");
+        System.out.println("[调试] 收到文件传输请求，内容: " + message.getContent());
+        
+        // 解析文件信息（统一使用冒号分隔符）
+        String[] parts = message.getContent().split(":");
         if (parts.length >= 2) {
-            String fileName = parts[0];
-            long fileSize = Long.parseLong(parts[1]);
-            
-            System.out.println(String.format("[文件传输] %s 请求发送文件: %s (%d bytes)", 
-                message.getSenderId(), fileName, fileSize));
-            
-            // 通知GUI界面
-            if (messageListener != null) {
-                messageListener.onFileTransferRequest(message.getSenderId(), fileName, fileSize);
+            try {
+                String fileName = parts[0];
+                long fileSize = Long.parseLong(parts[1]);
+                
+                System.out.println(String.format("[文件传输] %s 请求发送文件: %s (%d bytes)", 
+                    message.getSenderId(), fileName, fileSize));
+                
+                // 检查是否是群聊文件请求（没有目标ID）或私聊文件请求（有目标ID）
+                if (message.getTargetId() == null) {
+                    // 群聊文件请求 - 所有人都会收到
+                    System.out.println("[调试] 这是群聊文件请求");
+                    if (messageListener != null) {
+                        messageListener.onFileTransferRequest(message.getSenderId(), fileName, fileSize);
+                    }
+                } else if (message.getTargetId().equals(node.getNodeId())) {
+                    // 私聊文件请求 - 只有目标用户收到
+                    System.out.println("[调试] 这是发给我的私聊文件请求");
+                    if (messageListener != null) {
+                        messageListener.onFileTransferRequest(message.getSenderId(), fileName, fileSize);
+                    }
+                } else {
+                    System.out.println("[调试] 这是发给其他人的私聊文件请求，不处理");
+                }
+                
+            } catch (NumberFormatException e) {
+                System.err.println("解析文件大小失败: " + parts[1]);
             }
+        } else {
+            System.err.println("文件传输请求格式错误: " + message.getContent());
         }
     }
     
@@ -329,6 +352,16 @@ public class MessageRouter {
      */
     public MessageListener getMessageListener() {
         return messageListener;
+    }
+    
+    /**
+     * 清理断开连接的节点记录
+     */
+    public void cleanupDisconnectedNode(String nodeId, String address) {
+        // 移除相关的连接记录
+        String connectionKey = nodeId + "@" + address;
+        processedNodes.remove(connectionKey);
+        System.out.println("[调试] 清理断开连接的节点记录: " + connectionKey);
     }
     
     /**
