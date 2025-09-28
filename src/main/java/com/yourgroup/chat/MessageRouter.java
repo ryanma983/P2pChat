@@ -103,11 +103,21 @@ public class MessageRouter {
      * 处理握手消息
      */
     private void handleHelloMessage(PeerConnection source, Message message) {
-        System.out.println("收到握手消息，来自节点: " + message.getSenderId());
+        System.out.println("[调试] 收到握手消息，来自节点: " + message.getSenderId() + ", 地址: " + source.getAddress());
         
         // 通知GUI有新成员加入
         if (messageListener != null) {
+            System.out.println("[调试] 通知GUI添加成员: " + message.getSenderId());
             messageListener.onMemberJoined(message.getSenderId(), source.getAddress());
+        } else {
+            System.out.println("[调试] messageListener 为 null，无法通知GUI");
+        }
+        
+        // 如果这是入站连接，回复握手消息
+        if (source.isInbound()) {
+            System.out.println("[调试] 这是入站连接，回复握手消息");
+            Message replyHello = new Message(Message.Type.HELLO, node.getNodeId(), node.getNodeId() + ":" + node.getPort());
+            source.sendMessage(replyHello.serialize());
         }
         
         // 发送自己的邻居列表给新连接的节点

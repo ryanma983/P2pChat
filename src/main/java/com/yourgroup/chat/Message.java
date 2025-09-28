@@ -69,9 +69,12 @@ public class Message {
      * 将消息序列化为字符串格式
      */
     public String serialize() {
+        // 对内容进行编码，处理换行符和特殊字符
+        String encodedContent = encodeContent(content);
+        String encodedTargetId = targetId != null ? encodeContent(targetId) : "";
+        
         return String.format("%s|%s|%s|%s|%d|%d|%s", 
-            messageId, type.name(), senderId, content, timestamp, ttl, 
-            targetId != null ? targetId : "");
+            messageId, type.name(), senderId, encodedContent, timestamp, ttl, encodedTargetId);
     }
     
     /**
@@ -81,21 +84,43 @@ public class Message {
         try {
             String[] parts = data.split("\\|", 7);
             if (parts.length < 6) {
-                throw new IllegalArgumentException("Invalid message format");
+                throw new IllegalArgumentException("Invalid message format: expected at least 6 parts, got " + parts.length);
             }
             
             String messageId = parts[0];
             Type type = Type.valueOf(parts[1]);
             String senderId = parts[2];
-            String content = parts[3];
+            String content = decodeContent(parts[3]);
             long timestamp = Long.parseLong(parts[4]);
             int ttl = Integer.parseInt(parts[5]);
-            String targetId = parts.length > 6 && !parts[6].isEmpty() ? parts[6] : null;
+            String targetId = parts.length > 6 && !parts[6].isEmpty() ? decodeContent(parts[6]) : null;
             
             return new Message(messageId, type, senderId, content, timestamp, ttl, targetId);
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to deserialize message: " + data, e);
         }
+    }
+    
+    /**
+     * 编码内容，处理特殊字符
+     */
+    private static String encodeContent(String content) {
+        if (content == null) return "";
+        return content.replace("\\", "\\\\")
+                     .replace("|", "\\|")
+                     .replace("\n", "\\n")
+                     .replace("\r", "\\r");
+    }
+    
+    /**
+     * 解码内容，恢复特殊字符
+     */
+    private static String decodeContent(String encodedContent) {
+        if (encodedContent == null || encodedContent.isEmpty()) return "";
+        return encodedContent.replace("\\r", "\r")
+                            .replace("\\n", "\n")
+                            .replace("\\|", "|")
+                            .replace("\\\\", "\\");
     }
     
     /**
