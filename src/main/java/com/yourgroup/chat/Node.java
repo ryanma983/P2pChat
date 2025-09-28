@@ -22,9 +22,13 @@ public class Node {
     // 已知的其他节点地址列表
     private final List<String> knownPeers = new CopyOnWriteArrayList<>();
     
+    // 消息路由器
+    private MessageRouter messageRouter;
+    
     public Node(int port) {
         this.port = port;
         this.nodeId = generateNodeId();
+        this.messageRouter = new MessageRouter(this);
         System.out.println("节点创建完成，ID: " + nodeId + ", 端口: " + port);
     }
     
@@ -46,6 +50,9 @@ public class Node {
             
             // 启动服务器线程，接受新连接
             new Thread(this::acceptConnections).start();
+            
+            // 启动心跳检测线程
+            startHeartbeatTask();
             
             // 尝试连接到已知的节点
             connectToKnownPeers();
@@ -121,7 +128,8 @@ public class Node {
             System.out.println("成功连接到节点: " + address);
             
             // 发送握手消息
-            connection.sendMessage("HELLO:" + nodeId + ":" + port);
+            Message helloMessage = new Message(Message.Type.HELLO, nodeId, nodeId + ":" + port);
+            connection.sendMessage(helloMessage.serialize());
             
             return true;
             
@@ -170,7 +178,13 @@ public class Node {
         try {
             String line;
             while ((line = connection.readMessage()) != null) {
-                handleMessage(connection, line);
+                connection.updateLastActivity();
+                try {
+                    Message message = Message.deserialize(line);
+                    messageRouter.handleMessage(connection, message);
+                } catch (IllegalArgumentException e) {
+                    System.err.println("收到无效消息格式: " + line);
+                }
             }
         } catch (IOException e) {
             System.out.println("与节点 " + connection.getAddress() + " 的连接断开");
@@ -181,43 +195,12 @@ public class Node {
     }
     
     /**
-     * 处理收到的消息
-     */
-    private void handleMessage(PeerConnection connection, String message) {
-        System.out.println("收到来自 " + connection.getAddress() + " 的消息: " + message);
-        
-        if (message.startsWith("HELLO:")) {
-            // 处理握手消息
-            String[] parts = message.split(":");
-            if (parts.length >= 3) {
-                String peerId = parts[1];
-                String peerPort = parts[2];
-                System.out.println("节点 " + peerId + " 已连接 (端口: " + peerPort + ")");
-                
-                // 如果这是一个入站连接，我们需要记录它的地址
-                if (connection.isInbound()) {
-                    String peerAddress = connection.getSocket().getInetAddress().getHostAddress() + ":" + peerPort;
-                    connections.put(peerAddress, connection);
-                    connection.setAddress(peerAddress);
-                }
-            }
-        } else if (message.startsWith("CHAT:")) {
-            // 处理聊天消息
-            String chatMessage = message.substring(5);
-            System.out.println("聊天消息: " + chatMessage);
-            // 这里将来会广播给其他节点
-        }
-    }
-    
-    /**
      * 发送聊天消息到所有连接的节点
      */
     public void sendChatMessage(String message) {
-        String fullMessage = "CHAT:" + message;
-        for (PeerConnection connection : connections.values()) {
-            connection.sendMessage(fullMessage);
-        }
-        System.out.println("消息已发送到 " + connections.size() + " 个节点");
+        Message chatMessage = new Message(Message.Type.CHAT, nodeId, message);
+        messageRouter.broadcastMessage(chatMessage);
+        System.out.println("消息已广播到网络");
     }
     
     /**
@@ -239,5 +222,53 @@ public class Node {
      */
     public int getPort() {
         return port;
+    }
+    
+    /**
+     * 获取连接映射（用于MessageRouter）
+     */
+    public Map<String, PeerConnection> getConnections() {
+        return connections;
+    }
+    
+    /**
+     * 启动心跳检测任务
+     */
+    private void startHeartbeatTask() {
+        Timer heartbeatTimer = new Timer("Heartbeat-" + nodeId, true);
+        heartbeatTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (running) {
+                    // 发送心跳
+                    messageRouter.sendHeartbeat();
+                    
+                    // 检查超时连接
+                    checkTimeoutConnections();
+                }
+            }
+        }, 30000, 30000); // 每30秒执行一次
+    }
+    
+    /**
+     * 检查并清理超时的连接
+     */
+    private void checkTimeoutConnections() {
+        long timeoutMs = 120000; // 2分钟超时
+        List<String> timeoutConnections = new ArrayList<>();
+        
+        for (Map.Entry<String, PeerConnection> entry : connections.entrySet()) {
+            if (entry.getValue().isTimeout(timeoutMs)) {
+                timeoutConnections.add(entry.getKey());
+            }
+        }
+        
+        for (String address : timeoutConnections) {
+            System.out.println("连接超时，断开: " + address);
+            PeerConnection connection = connections.remove(address);
+            if (connection != null) {
+                connection.close();
+            }
+        }
     }
 }

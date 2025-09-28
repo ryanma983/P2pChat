@@ -12,6 +12,7 @@ public class PeerConnection {
     private final PrintWriter writer;
     private String address;
     private final boolean inbound; // true表示入站连接，false表示出站连接
+    private long lastActivity; // 最后活跃时间
     
     public PeerConnection(Socket socket, String address, boolean inbound) throws IOException {
         this.socket = socket;
@@ -19,6 +20,7 @@ public class PeerConnection {
         this.inbound = inbound;
         this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.writer = new PrintWriter(socket.getOutputStream(), true);
+        this.lastActivity = System.currentTimeMillis();
     }
     
     /**
@@ -81,5 +83,26 @@ public class PeerConnection {
      */
     public boolean isConnected() {
         return socket != null && socket.isConnected() && !socket.isClosed();
+    }
+    
+    /**
+     * 更新最后活跃时间
+     */
+    public void updateLastActivity() {
+        this.lastActivity = System.currentTimeMillis();
+    }
+    
+    /**
+     * 获取最后活跃时间
+     */
+    public long getLastActivity() {
+        return lastActivity;
+    }
+    
+    /**
+     * 检查连接是否超时
+     */
+    public boolean isTimeout(long timeoutMs) {
+        return System.currentTimeMillis() - lastActivity > timeoutMs;
     }
 }
