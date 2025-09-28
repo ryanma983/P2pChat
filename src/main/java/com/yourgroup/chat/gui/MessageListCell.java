@@ -8,6 +8,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.TextFlow;
+import com.yourgroup.chat.util.EmojiRenderer;
 
 /**
  * 自定义的消息列表单元格，用于显示聊天消息
@@ -17,7 +19,7 @@ public class MessageListCell extends ListCell<ChatMessage> {
     private HBox container;
     private VBox messageBox;
     private Label senderLabel;
-    private Label contentLabel;
+    private TextFlow contentFlow;  // 改为TextFlow以支持表情
     private Label timeLabel;
     private Region spacer;
     
@@ -30,25 +32,22 @@ public class MessageListCell extends ListCell<ChatMessage> {
         container = new HBox();
         messageBox = new VBox();
         senderLabel = new Label();
-        contentLabel = new Label();
+        contentFlow = new TextFlow();  // 使用TextFlow支持表情
         timeLabel = new Label();
         spacer = new Region();
         
-        // 设置标签属性
-        contentLabel.setWrapText(true);
-        contentLabel.setMaxWidth(400);
-        
-        // 设置支持表情的字体
-        contentLabel.setStyle("-fx-font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI', 'Microsoft YaHei', sans-serif;");
+        // 设置TextFlow属性
+        contentFlow.setMaxWidth(400);
+        contentFlow.setPrefWidth(Region.USE_COMPUTED_SIZE);
         
         senderLabel.getStyleClass().add("sender-label");
-        contentLabel.getStyleClass().add("content-label");
+        contentFlow.getStyleClass().add("content-flow");
         timeLabel.getStyleClass().add("time-label");
     }
     
     private void setupLayout() {
         // 设置消息框布局
-        messageBox.getChildren().addAll(senderLabel, contentLabel, timeLabel);
+        messageBox.getChildren().addAll(senderLabel, contentFlow, timeLabel);
         messageBox.setSpacing(2);
         messageBox.setPadding(new Insets(8, 12, 8, 12));
         
@@ -71,7 +70,12 @@ public class MessageListCell extends ListCell<ChatMessage> {
         
         // 更新消息内容
         senderLabel.setText(message.getSenderId());
-        contentLabel.setText(message.getContent());
+        
+        // 使用表情渲染器处理消息内容
+        TextFlow renderedContent = EmojiRenderer.renderEmojis(message.getContent());
+        contentFlow.getChildren().clear();
+        contentFlow.getChildren().addAll(renderedContent.getChildren());
+        
         timeLabel.setText(message.getFormattedTime());
         
         // 根据消息类型设置样式和对齐方式

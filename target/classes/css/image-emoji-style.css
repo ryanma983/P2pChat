@@ -1,0 +1,282 @@
+/* 基于图片的表情选择器样式 */
+.image-emoji-picker {
+    -fx-background-color: #36393f;
+    -fx-border-color: #202225;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 15, 0, 0, 5);
+}
+
+/* 搜索框样式 */
+.image-emoji-search {
+    -fx-background-color: #40444b;
+    -fx-border-color: #202225;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-text-fill: #dcddde;
+    -fx-prompt-text-fill: #72767d;
+    -fx-font-size: 14px;
+    -fx-padding: 8 12 8 12;
+    -fx-margin: 10;
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+}
+
+.image-emoji-search:focused {
+    -fx-border-color: #7289da;
+    -fx-background-color: #36393f;
+}
+
+/* 分类按钮区域 */
+.image-emoji-categories {
+    -fx-background-color: #2f3136;
+    -fx-border-color: #202225;
+    -fx-border-width: 0 1 0 0;
+}
+
+/* 分类按钮样式 */
+.image-emoji-category-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 6;
+}
+
+.image-emoji-category-btn:hover {
+    -fx-background-color: #40444b;
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.image-emoji-category-btn.selected {
+    -fx-background-color: #5865f2;
+}
+
+.image-emoji-category-btn:pressed {
+    -fx-background-color: #4752c4;
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+/* 表情滚动区域 */
+.image-emoji-scroll {
+    -fx-background-color: #36393f;
+    -fx-border-color: transparent;
+}
+
+.image-emoji-scroll .viewport {
+    -fx-background-color: #36393f;
+}
+
+.image-emoji-scroll .scroll-bar {
+    -fx-background-color: transparent;
+    -fx-pref-width: 8;
+}
+
+.image-emoji-scroll .scroll-bar .track {
+    -fx-background-color: transparent;
+}
+
+.image-emoji-scroll .scroll-bar .thumb {
+    -fx-background-color: #202225;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+}
+
+.image-emoji-scroll .scroll-bar .thumb:hover {
+    -fx-background-color: #2c2f33;
+}
+
+.image-emoji-scroll .scroll-bar .thumb:pressed {
+    -fx-background-color: #1e2124;
+}
+
+/* 表情流式布局 */
+.image-emoji-flow {
+    -fx-background-color: #36393f;
+}
+
+/* 表情按钮样式 - 专门为图片表情优化 */
+.image-emoji-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 4;
+    -fx-effect: null;
+}
+
+.image-emoji-btn:hover {
+    -fx-background-color: #40444b;
+    -fx-scale-x: 1.15;
+    -fx-scale-y: 1.15;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0, 0, 3);
+}
+
+.image-emoji-btn:pressed {
+    -fx-background-color: #2f3136;
+    -fx-scale-x: 0.9;
+    -fx-scale-y: 0.9;
+}
+
+/* 图片视图优化 */
+.image-emoji-btn .image-view {
+    -fx-smooth: true;
+    -fx-cache: true;
+}
+
+/* 工具提示样式 */
+.tooltip {
+    -fx-background-color: #18191c;
+    -fx-text-fill: #dcddde;
+    -fx-font-size: 12px;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-padding: 6 10 6 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 8, 0, 0, 2);
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+}
+
+/* 动画效果 */
+.image-emoji-btn {
+    -fx-transition: all 0.15s ease;
+}
+
+.image-emoji-category-btn {
+    -fx-transition: all 0.15s ease;
+}
+
+/* 响应式设计 */
+@media (max-width: 420px) {
+    .image-emoji-picker {
+        -fx-pref-width: 380px;
+    }
+    
+    .image-emoji-categories {
+        -fx-pref-width: 55px;
+    }
+    
+    .image-emoji-category-btn {
+        -fx-pref-size: 40px, 40px;
+    }
+    
+    .image-emoji-btn {
+        -fx-pref-size: 36px, 36px;
+    }
+}
+
+/* 高对比度模式 */
+.high-contrast .image-emoji-picker {
+    -fx-border-width: 2;
+    -fx-border-color: #ffffff;
+}
+
+.high-contrast .image-emoji-btn:hover {
+    -fx-border-width: 1;
+    -fx-border-color: #ffffff;
+}
+
+/* 无障碍支持 */
+.image-emoji-btn:focused {
+    -fx-border-width: 2;
+    -fx-border-color: #7289da;
+    -fx-background-color: #40444b;
+}
+
+.image-emoji-category-btn:focused {
+    -fx-border-width: 2;
+    -fx-border-color: #7289da;
+}
+
+/* 图片加载失败时的文字样式 */
+.image-emoji-btn .text {
+    -fx-font-size: 20px;
+    -fx-text-fill: #dcddde;
+    -fx-font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+}
+
+/* 分类图标加载失败时的文字样式 */
+.image-emoji-category-btn .text {
+    -fx-font-size: 24px;
+    -fx-text-fill: #b9bbbe;
+    -fx-font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+}
+
+.image-emoji-category-btn:hover .text {
+    -fx-text-fill: #dcddde;
+}
+
+.image-emoji-category-btn.selected .text {
+    -fx-text-fill: white;
+}
+
+/* 图片质量优化 */
+.image-view {
+    -fx-smooth: true;
+    -fx-cache: true;
+    -fx-cache-hint: quality;
+}
+
+/* 加载状态 */
+.image-emoji-btn.loading {
+    -fx-opacity: 0.6;
+}
+
+.image-emoji-btn.loaded {
+    -fx-opacity: 1.0;
+}
+
+/* 表情按钮悬停时的特殊效果 */
+.image-emoji-btn:hover .image-view {
+    -fx-effect: dropshadow(gaussian, rgba(255,255,255,0.2), 2, 0, 0, 0);
+}
+
+/* 搜索结果为空时的提示 */
+.empty-search-result {
+    -fx-text-fill: #72767d;
+    -fx-font-size: 14px;
+    -fx-padding: 20;
+    -fx-alignment: center;
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+}
+
+/* 最近使用表情的特殊标记 */
+.recent-emoji-btn {
+    -fx-border-color: #7289da;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+}
+
+/* 表情按钮的文字回退样式 */
+.image-emoji-btn .fallback-text {
+    -fx-font-size: 16px;
+    -fx-text-fill: #dcddde;
+    -fx-font-family: "Consolas", "Monaco", "Courier New", monospace;
+    -fx-font-weight: bold;
+}
+
+/* 确保图片居中显示 */
+.image-emoji-btn {
+    -fx-alignment: center;
+    -fx-content-display: graphic-only;
+}
+
+.image-emoji-category-btn {
+    -fx-alignment: center;
+    -fx-content-display: graphic-only;
+}
+
+/* 性能优化 */
+.image-emoji-picker * {
+    -fx-cache: true;
+    -fx-cache-hint: speed;
+}
+
+/* 平滑滚动 */
+.image-emoji-scroll {
+    -fx-smooth: true;
+}
