@@ -1,6 +1,6 @@
 /* 全局样式 */
 .root {
-    -fx-font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    -fx-font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI", "Microsoft YaHei", sans-serif;
     -fx-font-size: 14px;
     -fx-background-color: #f5f5f5;
 }
@@ -14,8 +14,38 @@
     -fx-text-fill: white;
 }
 
+.menu-bar .menu {
+    -fx-text-fill: white;
+}
+
+.menu-bar .menu .label {
+    -fx-text-fill: white;
+}
+
 .menu-bar .menu:hover {
     -fx-background-color: #34495e;
+}
+
+.menu-bar .menu:hover .label {
+    -fx-text-fill: white;
+}
+
+/* 菜单项样式 */
+.context-menu {
+    -fx-background-color: white;
+}
+
+.context-menu .menu-item {
+    -fx-background-color: white;
+    -fx-text-fill: #2c3e50;
+}
+
+.context-menu .menu-item:hover {
+    -fx-background-color: #ecf0f1;
+}
+
+.context-menu .menu-item .label {
+    -fx-text-fill: #2c3e50;
 }
 
 /* 主分割面板 */

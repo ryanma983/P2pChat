@@ -38,6 +38,9 @@ public class MessageListCell extends ListCell<ChatMessage> {
         contentLabel.setWrapText(true);
         contentLabel.setMaxWidth(400);
         
+        // 设置支持表情的字体
+        contentLabel.setStyle("-fx-font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI', 'Microsoft YaHei', sans-serif;");
+        
         senderLabel.getStyleClass().add("sender-label");
         contentLabel.getStyleClass().add("content-label");
         timeLabel.getStyleClass().add("time-label");

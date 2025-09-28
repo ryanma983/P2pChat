@@ -131,6 +131,13 @@ public class Node {
             Message helloMessage = new Message(Message.Type.HELLO, nodeId, nodeId + ":" + port);
             connection.sendMessage(helloMessage.serialize());
             
+            // 通知GUI有新成员加入（对于出站连接）
+            if (messageRouter.getMessageListener() != null) {
+                // 从地址中提取节点ID（这里简化处理，实际应该等待对方的握手回复）
+                String remoteNodeId = "Node-" + address.replace(":", "-");
+                messageRouter.getMessageListener().onMemberJoined(remoteNodeId, address);
+            }
+            
             return true;
             
         } catch (Exception e) {

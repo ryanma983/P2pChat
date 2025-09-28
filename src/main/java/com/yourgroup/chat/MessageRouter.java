@@ -102,6 +102,11 @@ public class MessageRouter {
     private void handleHelloMessage(PeerConnection source, Message message) {
         System.out.println("收到握手消息，来自节点: " + message.getSenderId());
         
+        // 通知GUI有新成员加入
+        if (messageListener != null) {
+            messageListener.onMemberJoined(message.getSenderId(), source.getAddress());
+        }
+        
         // 发送自己的邻居列表给新连接的节点
         sendPeerList(source);
     }
@@ -252,6 +257,13 @@ public class MessageRouter {
         if (!expiredMessages.isEmpty()) {
             System.out.println("清理了 " + expiredMessages.size() + " 条过期消息记录");
         }
+    }
+    
+    /**
+     * 获取消息监听器
+     */
+    public MessageListener getMessageListener() {
+        return messageListener;
     }
     
     /**

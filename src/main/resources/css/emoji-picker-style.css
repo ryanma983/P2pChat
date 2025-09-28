@@ -54,10 +54,12 @@
 .emoji-button {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
-    -fx-font-size: 18px;
+    -fx-font-size: 20px;
+    -fx-font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI", "Microsoft YaHei", sans-serif;
     -fx-cursor: hand;
     -fx-background-radius: 5;
     -fx-border-radius: 5;
+    -fx-text-fill: black;
 }
 
 .emoji-button:hover {
