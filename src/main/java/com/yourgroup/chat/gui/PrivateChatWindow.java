@@ -206,29 +206,6 @@ public class PrivateChatWindow {
         }
     }
     
-    private void handleEmojiButton() {
-        if (emojiPicker.isShowing()) {
-            emojiPicker.hide();
-        } else {
-            // 计算表情选择器的显示位置
-            double x = emojiButton.localToScreen(emojiButton.getBoundsInLocal()).getMinX();
-            double y = emojiButton.localToScreen(emojiButton.getBoundsInLocal()).getMinY() - 260;
-            emojiPicker.show(emojiButton, x, y);
-        }
-    }
-    
-    /**
-     * 插入表情到输入框
-     */
-    private void insertEmoji(String emoji) {
-        int caretPosition = messageInput.getCaretPosition();
-        String currentText = messageInput.getText();
-        String newText = currentText.substring(0, caretPosition) + emoji + currentText.substring(caretPosition);
-        messageInput.setText(newText);
-        messageInput.positionCaret(caretPosition + emoji.length());
-        messageInput.requestFocus();
-    }
-    
     private void handleSendFile() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("选择要发送的文件");
@@ -238,29 +215,6 @@ public class PrivateChatWindow {
             addSystemMessage("正在发送文件: " + selectedFile.getName());
             chatNode.sendFileRequest(targetMember.getNodeId(), selectedFile);
         }
-    }
-    
-    private void handleEmojiButton() {
-        if (emojiPicker.isShowing()) {
-            emojiPicker.hide();
-        } else {
-            // 计算表情选择器的显示位置
-            double x = emojiButton.localToScreen(emojiButton.getBoundsInLocal()).getMinX();
-            double y = emojiButton.localToScreen(emojiButton.getBoundsInLocal()).getMinY() - 260;
-            emojiPicker.show(emojiButton, x, y);
-        }
-    }
-    
-    /**
-     * 插入表情到输入框
-     */
-    private void insertEmoji(String emoji) {
-        int caretPosition = messageInput.getCaretPosition();
-        String currentText = messageInput.getText();
-        String newText = currentText.substring(0, caretPosition) + emoji + currentText.substring(caretPosition);
-        messageInput.setText(newText);
-        messageInput.positionCaret(caretPosition + emoji.length());
-        messageInput.requestFocus();
     }
     
     /**

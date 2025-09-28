@@ -1,0 +1,203 @@
+/* 私聊窗口全局样式 */
+.private-chat-window {
+    -fx-font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    -fx-font-size: 14px;
+    -fx-background-color: #f8f9fa;
+}
+
+/* 顶部状态栏 */
+.top-bar {
+    -fx-background-color: #3498db;
+    -fx-border-color: #2980b9;
+    -fx-border-width: 0 0 2 0;
+}
+
+.chat-title {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
+
+.status-label {
+    -fx-font-size: 12px;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 10;
+}
+
+.online-status {
+    -fx-background-color: #27ae60;
+    -fx-text-fill: white;
+}
+
+.offline-status {
+    -fx-background-color: #e74c3c;
+    -fx-text-fill: white;
+}
+
+.top-file-button {
+    -fx-background-color: #9b59b6;
+    -fx-text-fill: white;
+    -fx-background-radius: 15;
+    -fx-border-radius: 15;
+    -fx-font-size: 12px;
+    -fx-padding: 5 15 5 15;
+}
+
+.top-file-button:hover {
+    -fx-background-color: #8e44ad;
+}
+
+/* 私聊消息列表 */
+.private-message-list {
+    -fx-background-color: white;
+    -fx-border-color: transparent;
+    -fx-padding: 10;
+}
+
+.private-message-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 3 0 3 0;
+}
+
+.private-message-list .list-cell:selected {
+    -fx-background-color: transparent;
+}
+
+.private-message-list .list-cell:focused {
+    -fx-background-color: transparent;
+}
+
+/* 消息气泡样式 - 私聊专用 */
+.private-sent-message {
+    -fx-background-color: #3498db;
+    -fx-background-radius: 18;
+    -fx-text-fill: white;
+    -fx-max-width: 350;
+    -fx-padding: 8 12 8 12;
+}
+
+.private-received-message {
+    -fx-background-color: #ecf0f1;
+    -fx-background-radius: 18;
+    -fx-border-color: #bdc3c7;
+    -fx-border-width: 1;
+    -fx-border-radius: 18;
+    -fx-max-width: 350;
+    -fx-padding: 8 12 8 12;
+}
+
+.private-system-message {
+    -fx-background-color: #f39c12;
+    -fx-background-radius: 15;
+    -fx-text-fill: white;
+    -fx-alignment: center;
+    -fx-max-width: 300;
+    -fx-padding: 6 10 6 10;
+    -fx-font-style: italic;
+    -fx-font-size: 12px;
+}
+
+/* 输入区域 */
+.input-area {
+    -fx-background-color: white;
+    -fx-border-color: #e1e8ed;
+    -fx-border-width: 2 0 0 0;
+}
+
+.message-input {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #e1e8ed;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-padding: 10;
+    -fx-font-size: 14px;
+}
+
+.message-input:focused {
+    -fx-border-color: #3498db;
+    -fx-border-width: 2;
+}
+
+.message-input .content {
+    -fx-background-color: transparent;
+}
+
+/* 按钮样式 */
+.send-button {
+    -fx-background-color: #3498db;
+    -fx-text-fill: white;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-font-weight: bold;
+    -fx-padding: 8 20 8 20;
+    -fx-cursor: hand;
+}
+
+.send-button:hover {
+    -fx-background-color: #2980b9;
+}
+
+.send-button:pressed {
+    -fx-background-color: #21618c;
+}
+
+.send-button:disabled {
+    -fx-background-color: #bdc3c7;
+    -fx-text-fill: #7f8c8d;
+}
+
+.file-button {
+    -fx-background-color: #9b59b6;
+    -fx-text-fill: white;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-font-weight: bold;
+    -fx-padding: 8 20 8 20;
+    -fx-cursor: hand;
+}
+
+.file-button:hover {
+    -fx-background-color: #8e44ad;
+}
+
+.file-button:pressed {
+    -fx-background-color: #7d3c98;
+}
+
+.emoji-button-small {
+    -fx-background-color: #f39c12;
+    -fx-text-fill: white;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-padding: 8 15 8 15;
+    -fx-cursor: hand;
+}
+
+.emoji-button-small:hover {
+    -fx-background-color: #e67e22;
+}
+
+.emoji-button-small:pressed {
+    -fx-background-color: #d35400;
+}
+
+/* 滚动条样式 */
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .track {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #bdc3c7;
+    -fx-background-radius: 5;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #95a5a6;
+}
