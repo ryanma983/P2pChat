@@ -117,13 +117,17 @@ public class FileTransferService {
             String header = new String(headerBytes, "UTF-8");
             System.out.println("[文件传输] 收到传输头: " + header);
             
-            String[] parts = header.split(":");
+            // 使用限制分割次数的方式解析，避免路径中的冒号被错误分割
+            String[] parts = header.split(":", 5);
             if (parts.length >= 5) {
                 String action = parts[0];
                 String sessionId = parts[1];
                 String fileName = parts[2];
                 long fileSize = Long.parseLong(parts[3]);
-                String savePath = parts[4];
+                String savePath = parts[4]; // 这里包含完整路径，包括可能的冒号
+                
+                System.out.println("[文件传输] 解析结果 - 动作: " + action + ", 会话: " + sessionId + 
+                                 ", 文件名: " + fileName + ", 大小: " + fileSize + ", 路径: " + savePath);
                 
                 if ("SEND".equals(action)) {
                     // 接收文件，使用传输头中的保存路径
