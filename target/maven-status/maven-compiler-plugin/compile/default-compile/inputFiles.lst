@@ -2,6 +2,7 @@
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/Main.java
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/Node.java
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/PeerConnection.java
+/home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/FileTransferService.java
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/gui/PrivateChatWindow.java
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/MessageListener.java
 /home/ubuntu/P2pChat/src/main/java/com/yourgroup/chat/gui/MessageListCell.java

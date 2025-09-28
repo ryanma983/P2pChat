@@ -14,6 +14,8 @@ com/yourgroup/chat/Node.class
 com/yourgroup/chat/gui/EnhancedChatController$1.class
 com/yourgroup/chat/MessageRouter$2.class
 com/yourgroup/chat/gui/ChatApplication.class
+com/yourgroup/chat/FileTransferService$FileTransferSession.class
+com/yourgroup/chat/FileTransferService.class
 com/yourgroup/chat/gui/EmojiPicker.class
 com/yourgroup/chat/Main.class
 com/yourgroup/chat/gui/PrivateChatWindow.class

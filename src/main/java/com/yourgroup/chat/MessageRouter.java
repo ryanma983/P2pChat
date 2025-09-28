@@ -1,5 +1,6 @@
 package com.yourgroup.chat;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -254,8 +255,8 @@ public class MessageRouter {
                         messageListener.onSystemMessage("用户 " + senderId + " 接受了文件传输: " + fileName);
                     }
                     
-                    // TODO: 在这里实现实际的文件传输逻辑
-                    // 可以启动文件传输线程，将文件发送到指定的保存路径
+                    // 实现实际的文件传输逻辑
+                    startFileTransfer(senderId, fileName, savePath);
                 }
             } else if (content.startsWith("REJECT:")) {
                 // 文件传输被拒绝
@@ -417,5 +418,26 @@ public class MessageRouter {
     public void sendHeartbeat() {
         Message pingMessage = new Message(Message.Type.PING, node.getNodeId(), "ping");
         broadcastMessage(pingMessage);
+    }
+    
+    /**
+     * 启动文件传输
+     */
+    private void startFileTransfer(String targetNodeId, String fileName, String savePath) {
+        // 从待发送文件映射中获取文件
+        File fileToSend = node.getPendingFile(fileName);
+        
+        if (fileToSend != null && fileToSend.exists()) {
+            System.out.println("[文件传输] 找到文件，开始传输: " + fileToSend.getAbsolutePath());
+            node.getFileTransferService().sendFile(targetNodeId, fileToSend, savePath);
+            
+            // 传输开始后移除待发送文件记录
+            node.removePendingFile(fileName);
+        } else {
+            System.err.println("[文件传输] 找不到要发送的文件: " + fileName);
+            if (messageListener != null) {
+                messageListener.onSystemMessage("错误：找不到要发送的文件 " + fileName);
+            }
+        }
     }
 }

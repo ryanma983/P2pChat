@@ -28,10 +28,17 @@ public class Node {
     // 消息路由器
     private MessageRouter messageRouter;
     
+    // 文件传输服务
+    private FileTransferService fileTransferService;
+    
+    // 待发送文件映射 (fileName -> File对象)
+    private final Map<String, File> pendingFiles = new ConcurrentHashMap<>();
+    
     public Node(int port) {
         this.port = port;
         this.nodeId = generateNodeId();
         this.messageRouter = new MessageRouter(this);
+        this.fileTransferService = new FileTransferService(this);
         
         // 添加自己的地址映射
         nodeAddresses.put(nodeId, "localhost:" + port);
@@ -61,6 +68,9 @@ public class Node {
             // 启动心跳检测线程
             startHeartbeatTask();
             
+            // 启动文件传输服务
+            fileTransferService.start();
+            
             // 尝试连接到已知的节点
             connectToKnownPeers();
             
@@ -78,6 +88,10 @@ public class Node {
         try {
             if (serverSocket != null && !serverSocket.isClosed()) {
                 serverSocket.close();
+            }
+            // 停止文件传输服务
+            if (fileTransferService != null) {
+                fileTransferService.stop();
             }
             // 关闭所有连接
             for (PeerConnection connection : connections.values()) {
@@ -276,6 +290,9 @@ public class Node {
      * 发送文件传输请求（私聊）
      */
     public void sendFileRequest(String targetNodeId, java.io.File file) {
+        // 保存文件信息以便后续传输
+        pendingFiles.put(file.getName(), file);
+        
         String fileInfo = file.getName() + ":" + file.length(); // 使用冒号分隔符
         Message fileRequest = new Message(Message.Type.FILE_REQUEST, nodeId, fileInfo, targetNodeId);
         messageRouter.broadcastMessage(fileRequest);
@@ -286,6 +303,9 @@ public class Node {
      * 发送群聊文件请求
      */
     public void sendGroupFileRequest(java.io.File file) {
+        // 保存文件信息以便后续传输
+        pendingFiles.put(file.getName(), file);
+        
         String fileInfo = file.getName() + ":" + file.length(); // 使用冒号分隔符
         Message fileRequest = new Message(Message.Type.FILE_REQUEST, nodeId, fileInfo);
         messageRouter.broadcastMessage(fileRequest);
@@ -403,5 +423,33 @@ public class Node {
                 connection.close();
             }
         }
+    }
+    
+    /**
+     * 获取消息路由器
+     */
+    public MessageRouter getMessageRouter() {
+        return messageRouter;
+    }
+    
+    /**
+     * 获取文件传输服务
+     */
+    public FileTransferService getFileTransferService() {
+        return fileTransferService;
+    }
+    
+    /**
+     * 获取待发送文件
+     */
+    public File getPendingFile(String fileName) {
+        return pendingFiles.get(fileName);
+    }
+    
+    /**
+     * 移除待发送文件
+     */
+    public void removePendingFile(String fileName) {
+        pendingFiles.remove(fileName);
     }
 }
