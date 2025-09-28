@@ -22,6 +22,9 @@ public class Node {
     // 已知的其他节点地址列表
     private final List<String> knownPeers = new CopyOnWriteArrayList<>();
     
+    // 节点ID到监听地址的映射
+    private final Map<String, String> nodeAddresses = new ConcurrentHashMap<>();
+    
     // 消息路由器
     private MessageRouter messageRouter;
     
@@ -29,6 +32,10 @@ public class Node {
         this.port = port;
         this.nodeId = generateNodeId();
         this.messageRouter = new MessageRouter(this);
+        
+        // 添加自己的地址映射
+        nodeAddresses.put(nodeId, "localhost:" + port);
+        
         System.out.println("节点创建完成，ID: " + nodeId + ", 端口: " + port);
     }
     
@@ -260,6 +267,21 @@ public class Node {
      */
     public int getConnectionCount() {
         return connections.size();
+    }
+    
+    /**
+     * 获取节点地址映射
+     */
+    public Map<String, String> getNodeAddresses() {
+        return nodeAddresses;
+    }
+    
+    /**
+     * 添加节点地址映射
+     */
+    public void addNodeAddress(String nodeId, String address) {
+        nodeAddresses.put(nodeId, address);
+        System.out.println("[调试] 添加节点地址映射: " + nodeId + " -> " + address);
     }
     
     /**

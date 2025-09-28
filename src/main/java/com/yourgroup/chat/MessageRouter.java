@@ -105,6 +105,17 @@ public class MessageRouter {
     private void handleHelloMessage(PeerConnection source, Message message) {
         System.out.println("[调试] 收到握手消息，来自节点: " + message.getSenderId() + ", 地址: " + source.getAddress());
         
+        // 解析握手消息中的节点地址信息
+        String content = message.getContent();
+        if (content.contains(":")) {
+            String[] parts = content.split(":");
+            if (parts.length >= 2) {
+                String nodeAddress = "localhost:" + parts[parts.length - 1]; // 提取端口号
+                node.addNodeAddress(message.getSenderId(), nodeAddress);
+                System.out.println("[调试] 解析节点地址: " + message.getSenderId() + " -> " + nodeAddress);
+            }
+        }
+        
         // 通知GUI有新成员加入
         if (messageListener != null) {
             System.out.println("[调试] 通知GUI添加成员: " + message.getSenderId());
@@ -232,8 +243,9 @@ public class MessageRouter {
      * 发送邻居列表给指定连接
      */
     private void sendPeerList(PeerConnection target) {
-        Set<String> peers = node.getConnections().keySet();
-        String peerList = String.join(",", peers);
+        // 使用节点地址映射而不是连接地址
+        Collection<String> nodeAddresses = node.getNodeAddresses().values();
+        String peerList = String.join(",", nodeAddresses);
         
         System.out.println("[调试] 发送邻居列表给 " + target.getAddress() + ": " + peerList);
         
