@@ -1,7 +1,23 @@
 @echo off
+setlocal enabledelayedexpansion
+
 echo ========================================
 echo Multi-GUI P2P Chat Test Launcher
 echo ========================================
+echo.
+
+REM Check if we're in the right directory
+if not exist "..\target\p2p-chat-1.0-SNAPSHOT.jar" (
+    echo ❌ ERROR: Cannot find JAR file!
+    echo Please make sure you're running this from the testing\ folder
+    echo and that the project has been compiled with: mvn clean package
+    echo.
+    echo For diagnosis, run: test-diagnosis.bat
+    pause
+    exit /b 1
+)
+
+echo ✅ JAR file found!
 echo.
 
 echo This will start multiple GUI instances for P2P testing.
@@ -162,4 +178,5 @@ goto start
 
 :end
 echo.
-pause
+echo Press any key to exit...
+pause >nul
