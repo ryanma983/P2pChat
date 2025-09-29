@@ -53,11 +53,26 @@ mvn clean install
 
 **运行:**
 
-编译成功后，会生成一个可执行的JAR文件。通过以下命令启动应用：
+编译成功后，会生成一个可执行的JAR文件。
 
-```bash
-java -jar target/p2p-chat-1.0-SNAPSHOT.jar
+**推荐方式（自动处理JavaFX）:**
+
+Windows用户：
+```cmd
+run-with-javafx.bat
 ```
+
+Linux/Mac用户：
+```bash
+./run-with-javafx.sh
+```
+
+**手动运行（如果遇到JavaFX错误）:**
+```bash
+java --module-path . --add-modules javafx.controls,javafx.fxml -jar target/p2p-chat-1.0-SNAPSHOT.jar
+```
+
+**如果仍有问题，请查看:** `JAVAFX_RUNTIME_SOLUTIONS.md`
 
 应用启动后，您可以：
 1.  在第一个终端中启动一个节点（例如，使用默认端口8080）。
