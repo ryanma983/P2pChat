@@ -436,8 +436,29 @@ public class FileTransferService {
     }
     
     public void acceptFileTransfer(String senderId, String fileName, String savePath) {
-        // 简化实现
         System.out.println("接受文件传输: " + fileName + " 来自 " + senderId);
+        
+        // 通知发送方开始传输文件
+        transferExecutor.submit(() -> {
+            try {
+                // 查找发送方的文件
+                File fileToSend = node.getPendingFile(fileName);
+                if (fileToSend != null && fileToSend.exists()) {
+                    System.out.println("[文件传输] 找到待发送文件: " + fileName);
+                    // 直接发送文件到接收方
+                    sendFile(senderId, fileToSend, savePath);
+                } else {
+                    System.err.println("[文件传输] 找不到待发送文件: " + fileName);
+                    if (node.getMessageRouter().getMessageListener() != null) {
+                        node.getMessageRouter().getMessageListener().onSystemMessage(
+                            "文件传输失败: 找不到文件 " + fileName);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("[文件传输] 接受文件传输时发生错误: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
     }
     
     public void rejectFileTransfer(String senderId, String fileName) {
