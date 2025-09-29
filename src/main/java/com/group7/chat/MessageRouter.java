@@ -284,9 +284,10 @@ public class MessageRouter {
     }
 
     private void handlePrivateChatMessage(PeerConnection source, Message message) {
-        // 路由和本地处理已在 routeAppMessage 中完成
-        // 这里不需要额外操作，因为如果消息是给我的，processLocalAppMessage会处理
-        // 如果不是给我的，forwardMessage会处理
+        System.out.println("处理私聊消息: " + message.getSenderId().substring(0, 8) + "... -> " + 
+            (message.getTargetId() != null ? message.getTargetId().substring(0, 8) + "..." : "null"));
+        // 私聊消息需要通过路由系统处理
+        routeAppMessage(source, message);
     }
 
     private void handleFileTransferRequest(PeerConnection source, Message message) {
