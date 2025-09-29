@@ -9,9 +9,9 @@ echo.
 echo [DEBUG] Current directory: %CD%
 echo [DEBUG] Checking if we're in the testing folder...
 
-if not exist "..\target\p2p-chat-1.0-SNAPSHOT.jar" (
+if not exist "..\..\target\p2p-chat-1.0-SNAPSHOT.jar" (
     echo ❌ ERROR: Cannot find JAR file!
-    echo Expected location: ..\target\p2p-chat-1.0-SNAPSHOT.jar
+    echo Expected location: ..\..\target\p2p-chat-1.0-SNAPSHOT.jar
     echo Current directory: %CD%
     echo.
     echo Please make sure you're running this from the testing\ folder
@@ -78,10 +78,10 @@ goto invalid
 :single_node
 echo.
 echo [DEBUG] Testing single GUI node...
-echo Command: java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\target\p2p-chat-1.0-SNAPSHOT.jar 8080
+echo Command: java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\..\target\p2p-chat-1.0-SNAPSHOT.jar 8080
 echo.
 echo Starting single GUI node for testing...
-start "P2P Chat GUI - Test Node (8080)" java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\target\p2p-chat-1.0-SNAPSHOT.jar 8080
+start "P2P Chat GUI - Test Node (8080)" java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\..\target\p2p-chat-1.0-SNAPSHOT.jar 8080
 echo.
 echo ✅ Single GUI node started!
 echo If the GUI window doesn't appear, there might be a JavaFX issue.
@@ -92,15 +92,15 @@ echo.
 echo [DEBUG] Starting 2 GUI nodes...
 echo.
 echo [1/2] Starting GUI Node 1 (Port 8080)...
-echo [DEBUG] Command: java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\target\p2p-chat-1.0-SNAPSHOT.jar 8080
-start "P2P Chat GUI - Node 1 (8080)" java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\target\p2p-chat-1.0-SNAPSHOT.jar 8080
+echo [DEBUG] Command: java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\..\target\p2p-chat-1.0-SNAPSHOT.jar 8080
+start "P2P Chat GUI - Node 1 (8080)" java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\..\target\p2p-chat-1.0-SNAPSHOT.jar 8080
 
 echo [DEBUG] Waiting 3 seconds...
 timeout /t 3 /nobreak >nul
 
 echo [2/2] Starting GUI Node 2 (Port 8081)...
-echo [DEBUG] Command: java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\target\p2p-chat-1.0-SNAPSHOT.jar 8081
-start "P2P Chat GUI - Node 2 (8081)" java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\target\p2p-chat-1.0-SNAPSHOT.jar 8081
+echo [DEBUG] Command: java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\..\target\p2p-chat-1.0-SNAPSHOT.jar 8081
+start "P2P Chat GUI - Node 2 (8081)" java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\..\target\p2p-chat-1.0-SNAPSHOT.jar 8081
 
 echo.
 echo ✅ 2 GUI nodes started!
@@ -113,17 +113,17 @@ echo.
 echo [DEBUG] Starting 3 GUI nodes...
 echo.
 echo [1/3] Starting GUI Node 1 (Port 8080)...
-start "P2P Chat GUI - Node 1 (8080)" java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\target\p2p-chat-1.0-SNAPSHOT.jar 8080
+start "P2P Chat GUI - Node 1 (8080)" java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\..\target\p2p-chat-1.0-SNAPSHOT.jar 8080
 
 timeout /t 3 /nobreak >nul
 
 echo [2/3] Starting GUI Node 2 (Port 8081)...
-start "P2P Chat GUI - Node 2 (8081)" java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\target\p2p-chat-1.0-SNAPSHOT.jar 8081
+start "P2P Chat GUI - Node 2 (8081)" java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\..\target\p2p-chat-1.0-SNAPSHOT.jar 8081
 
 timeout /t 3 /nobreak >nul
 
 echo [3/3] Starting GUI Node 3 (Port 8082)...
-start "P2P Chat GUI - Node 3 (8082)" java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\target\p2p-chat-1.0-SNAPSHOT.jar 8082
+start "P2P Chat GUI - Node 3 (8082)" java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\..\target\p2p-chat-1.0-SNAPSHOT.jar 8082
 
 echo.
 echo ✅ 3 GUI nodes started!
@@ -139,7 +139,7 @@ echo.
 for /l %%i in (1,1,4) do (
     set /a port=8079+%%i
     echo [%%i/4] Starting GUI Node %%i (Port !port!)...
-    start "P2P Chat GUI - Node %%i (!port!)" java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\target\p2p-chat-1.0-SNAPSHOT.jar !port!
+    start "P2P Chat GUI - Node %%i (!port!)" java --module-path . --add-modules javafx.controls,javafx.fxml -jar ..\..\target\p2p-chat-1.0-SNAPSHOT.jar !port!
     timeout /t 3 /nobreak >nul
 )
 

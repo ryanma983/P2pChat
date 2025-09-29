@@ -9,23 +9,23 @@ echo "Starting 3 nodes for testing..."
 echo
 
 echo "[1/3] Starting Node 1 (Port 8080)..."
-gnome-terminal --title="Node 1 - Port 8080" -- java -cp target/classes com.group7.chat.Main 8080 2>/dev/null || \
-xterm -title "Node 1 - Port 8080" -e java -cp target/classes com.group7.chat.Main 8080 2>/dev/null || \
-java -cp target/classes com.group7.chat.Main 8080 &
+gnome-terminal --title="Node 1 - Port 8080" -- java -cp ../target/classes com.group7.chat.Main 8080 2>/dev/null || \
+xterm -title "Node 1 - Port 8080" -e java -cp ../target/classes com.group7.chat.Main 8080 2>/dev/null || \
+java -cp ../target/classes com.group7.chat.Main 8080 &
 
 sleep 2
 
 echo "[2/3] Starting Node 2 (Port 8081)..."
-gnome-terminal --title="Node 2 - Port 8081" -- java -cp target/classes com.group7.chat.Main 8081 localhost:8080 2>/dev/null || \
-xterm -title "Node 2 - Port 8081" -e java -cp target/classes com.group7.chat.Main 8081 localhost:8080 2>/dev/null || \
-java -cp target/classes com.group7.chat.Main 8081 localhost:8080 &
+gnome-terminal --title="Node 2 - Port 8081" -- java -cp ../target/classes com.group7.chat.Main 8081 localhost:8080 2>/dev/null || \
+xterm -title "Node 2 - Port 8081" -e java -cp ../target/classes com.group7.chat.Main 8081 localhost:8080 2>/dev/null || \
+java -cp ../target/classes com.group7.chat.Main 8081 localhost:8080 &
 
 sleep 2
 
 echo "[3/3] Starting Node 3 (Port 8082)..."
-gnome-terminal --title="Node 3 - Port 8082" -- java -cp target/classes com.group7.chat.Main 8082 localhost:8080 2>/dev/null || \
-xterm -title "Node 3 - Port 8082" -e java -cp target/classes com.group7.chat.Main 8082 localhost:8080 2>/dev/null || \
-java -cp target/classes com.group7.chat.Main 8082 localhost:8080 &
+gnome-terminal --title="Node 3 - Port 8082" -- java -cp ../target/classes com.group7.chat.Main 8082 localhost:8080 2>/dev/null || \
+xterm -title "Node 3 - Port 8082" -e java -cp ../target/classes com.group7.chat.Main 8082 localhost:8080 2>/dev/null || \
+java -cp ../target/classes com.group7.chat.Main 8082 localhost:8080 &
 
 echo
 echo "========================================"

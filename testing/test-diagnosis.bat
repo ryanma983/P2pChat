@@ -12,12 +12,12 @@ echo Current directory: %CD%
 echo.
 
 echo [2/6] Checking if JAR file exists...
-if exist "..\target\p2p-chat-1.0-SNAPSHOT.jar" (
-    echo ✅ JAR file found: ..\target\p2p-chat-1.0-SNAPSHOT.jar
-    dir "..\target\p2p-chat-1.0-SNAPSHOT.jar"
+if exist "..\..\target\p2p-chat-1.0-SNAPSHOT.jar" (
+    echo ✅ JAR file found: ..\..\target\p2p-chat-1.0-SNAPSHOT.jar
+    dir "..\..\target\p2p-chat-1.0-SNAPSHOT.jar"
 ) else (
     echo ❌ JAR file NOT found!
-    echo Expected location: ..\target\p2p-chat-1.0-SNAPSHOT.jar
+    echo Expected location: ..\..\target\p2p-chat-1.0-SNAPSHOT.jar
     echo.
     echo This means the project hasn't been compiled yet.
     echo Please run: mvn clean package
@@ -38,8 +38,8 @@ if %ERRORLEVEL% NEQ 0 (
 echo.
 
 echo [4/6] Testing basic JAR execution...
-echo Trying to run: java -jar ..\target\p2p-chat-1.0-SNAPSHOT.jar --help
-java -jar ..\target\p2p-chat-1.0-SNAPSHOT.jar --help 2>&1
+echo Trying to run: java -jar ..\..\target\p2p-chat-1.0-SNAPSHOT.jar --help
+java -jar ..\..\target\p2p-chat-1.0-SNAPSHOT.jar --help 2>&1
 echo Return code: %ERRORLEVEL%
 echo.
 
@@ -56,7 +56,7 @@ echo.
 
 echo [6/6] Testing CLI version...
 echo Trying to start CLI version for 5 seconds...
-timeout /t 5 java -cp ..\target\classes com.group7.chat.Main 8080 2>&1
+timeout /t 5 java -cp ..\..\target\classes com.group7.chat.Main 8080 2>&1
 echo.
 
 echo ========================================
@@ -64,7 +64,7 @@ echo Diagnosis Summary
 echo ========================================
 echo.
 
-if not exist "..\target\p2p-chat-1.0-SNAPSHOT.jar" (
+if not exist "..\..\target\p2p-chat-1.0-SNAPSHOT.jar" (
     echo ❌ PROBLEM: JAR file missing
     echo SOLUTION: Run 'mvn clean package' in the main project directory
     goto end
