@@ -55,6 +55,15 @@ java -cp target/classes com.group7.chat.Main
 
 **解决方案：**
 
+**首先检查JavaFX是否已安装：**
+```cmd
+# Windows
+check-javafx.bat
+
+# Linux/Mac  
+./check-javafx.sh
+```
+
 1. **最简单方法（推荐）：**
    - 下载包含JavaFX的Java：https://www.azul.com/downloads/?package=jdk-fx
    - 选择 "Azul Zulu JDK FX" for your OS
