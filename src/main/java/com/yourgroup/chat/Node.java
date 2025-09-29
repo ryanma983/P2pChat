@@ -1,225 +1,216 @@
 package com.yourgroup.chat;
 
-import java.io.*;
-import java.net.*;
+import com.yourgroup.chat.security.SecurityManager;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
- * P2P聊天网络中的节点类
- * 每个节点既可以作为服务器接受连接，也可以作为客户端连接到其他节点
+ * P2P聊天网络中的节点类 (已更新为支持Kademlia风格的路由)
  */
 public class Node {
+    // --- Kademlia 常量 ---
+    public static final int K_VALUE = 20; // 每个K-桶的大小
+    private static final int ID_LENGTH = 256; // 节点ID的位数 (SHA-256)
+
+    // --- 节点核心属性 ---
     private final int port;
-    private final String nodeId;
+    private final BigInteger nodeId;
     private ServerSocket serverSocket;
     private boolean running = false;
-    
-    // 存储与其他节点的连接
+
+    // --- Kademlia 路由表 ---
+    private final List<Map<BigInteger, NodeInfo>> routingTable;
+
+    // --- 连接和状态管理 ---
     private final Map<String, PeerConnection> connections = new ConcurrentHashMap<>();
-    
-    // 已知的其他节点地址列表
-    private final List<String> knownPeers = new CopyOnWriteArrayList<>();
-    
-    // 节点ID到监听地址的映射
-    private final Map<String, String> nodeAddresses = new ConcurrentHashMap<>();
-    
-    // 消息路由器
+    private final List<String> bootstrapPeers = new CopyOnWriteArrayList<>(); // 引导节点列表
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+    // --- 服务组件 ---
     private MessageRouter messageRouter;
-    
-    // 文件传输服务
     private FileTransferService fileTransferService;
-    
-    // 待发送文件映射 (fileName -> File对象)
+    private SecurityManager securityManager;
+
     private final Map<String, File> pendingFiles = new ConcurrentHashMap<>();
-    
+
+    public static class NodeInfo {
+        private final BigInteger nodeId;
+        private final String host;
+        private final int port;
+        private long lastSeen;
+
+        public NodeInfo(BigInteger nodeId, String host, int port) {
+            this.nodeId = nodeId;
+            this.host = host;
+            this.port = port;
+            this.lastSeen = System.currentTimeMillis();
+        }
+
+        public void updateLastSeen() {
+            this.lastSeen = System.currentTimeMillis();
+        }
+
+        public BigInteger getNodeId() { return nodeId; }
+        public String getHost() { return host; }
+        public int getPort() { return port; }
+        public String getAddress() { return host + ":" + port; }
+        public long getLastSeen() { return lastSeen; }
+    }
+
     public Node(int port) {
         this.port = port;
         this.nodeId = generateNodeId();
         this.messageRouter = new MessageRouter(this);
         this.fileTransferService = new FileTransferService(this);
-        
-        // 添加自己的地址映射
-        nodeAddresses.put(nodeId, "localhost:" + port);
-        
-        System.out.println("节点创建完成，ID: " + nodeId + ", 端口: " + port);
+
+        this.routingTable = new ArrayList<>(ID_LENGTH);
+        for (int i = 0; i < ID_LENGTH; i++) {
+            routingTable.add(new ConcurrentHashMap<>());
+        }
+
+        try {
+            this.securityManager = new SecurityManager(nodeId.toString(16), port);
+        } catch (Exception e) {
+            System.err.println("安全管理器初始化失败: " + e.getMessage());
+            this.securityManager = null;
+        }
+
+        System.out.println("节点创建完成，ID: " + nodeId.toString(16).substring(0, 12) + "..., 端口: " + port);
     }
-    
-    /**
-     * 生成唯一的节点ID
-     */
-    private String generateNodeId() {
-        return "Node-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 1000);
+
+    private BigInteger generateNodeId() {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            String randomData = System.currentTimeMillis() + "-" + UUID.randomUUID().toString();
+            byte[] hash = md.digest(randomData.getBytes());
+            return new BigInteger(1, hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("无法生成节点ID", e);
+        }
     }
-    
-    /**
-     * 启动节点，开始监听连接
-     */
+
+    private BigInteger getDistance(BigInteger id1, BigInteger id2) {
+        return id1.xor(id2);
+    }
+
+    private int getBucketIndex(BigInteger targetNodeId) {
+        BigInteger distance = getDistance(this.nodeId, targetNodeId);
+        if (distance.equals(BigInteger.ZERO)) return 0;
+        return ID_LENGTH - distance.bitLength();
+    }
+
     public void start() {
         try {
             serverSocket = new ServerSocket(port);
             running = true;
-            System.out.println("节点 " + nodeId + " 启动成功，监听端口: " + port);
-            
-            // 启动服务器线程，接受新连接
+            System.out.println("节点 " + getNodeIdString().substring(0, 8) + " 启动成功，监听端口: " + port);
+
             new Thread(this::acceptConnections).start();
-            
-            // 启动心跳检测线程
-            startHeartbeatTask();
-            
-            // 启动文件传输服务
+            startMaintenanceTasks();
             fileTransferService.start();
-            
-            // 尝试连接到已知的节点
-            connectToKnownPeers();
-            
+
+            if (securityManager != null) {
+                securityManager.start();
+            }
+
+            bootstrap();
+
         } catch (IOException e) {
             System.err.println("无法启动节点: " + e.getMessage());
-            e.printStackTrace();
         }
     }
-    
-    /**
-     * 停止节点
-     */
+
     public void stop() {
         running = false;
+        scheduler.shutdownNow();
         try {
-            if (serverSocket != null && !serverSocket.isClosed()) {
-                serverSocket.close();
-            }
-            // 停止文件传输服务
-            if (fileTransferService != null) {
-                fileTransferService.stop();
-            }
-            // 关闭所有连接
+            if (serverSocket != null && !serverSocket.isClosed()) serverSocket.close();
+            if (fileTransferService != null) fileTransferService.stop();
+            if (securityManager != null) securityManager.stop();
             for (PeerConnection connection : connections.values()) {
                 connection.close();
             }
             connections.clear();
-            System.out.println("节点 " + nodeId + " 已停止");
+            System.out.println("节点 " + getNodeIdString().substring(0, 8) + " 已停止");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    
-    /**
-     * 添加已知节点地址
-     */
-    public void addKnownPeer(String address) {
-        if (!knownPeers.contains(address)) {
-            knownPeers.add(address);
-            System.out.println("添加已知节点: " + address);
+
+    public void addBootstrapPeer(String address) {
+        if (!bootstrapPeers.contains(address)) {
+            bootstrapPeers.add(address);
         }
     }
-    
-    /**
-     * 连接到指定的节点
-     */
+
+    private void bootstrap() {
+        scheduler.schedule(() -> {
+            System.out.println("开始引导过程...");
+            for (String peerAddress : bootstrapPeers) {
+                connectToPeer(peerAddress);
+            }
+            // 发起对自己的FIND_NODE请求，以填充邻近的K-桶
+            lookupNodes(this.nodeId);
+        }, 1, TimeUnit.SECONDS);
+    }
+
     public boolean connectToPeer(String address) {
+        if (connections.containsKey(address)) return true;
         try {
             String[] parts = address.split(":");
-            if (parts.length != 2) {
-                System.err.println("无效的节点地址格式: " + address + " (应该是 host:port)");
-                return false;
-            }
-            
             String host = parts[0];
             int peerPort = Integer.parseInt(parts[1]);
-            
-            // 避免连接到自己
-            if (host.equals("localhost") && peerPort == this.port) {
-                return false;
-            }
-            
-            // 检查是否已经连接
-            if (connections.containsKey(address)) {
-                System.out.println("已经连接到节点: " + address);
-                return true;
-            }
-            
+
+            if (host.equals("localhost") && peerPort == this.port) return false;
+
             Socket socket = new Socket(host, peerPort);
             PeerConnection connection = new PeerConnection(socket, address, false);
             connections.put(address, connection);
-            
-            // 启动连接处理线程
+
             new Thread(() -> handlePeerConnection(connection)).start();
-            
             System.out.println("成功连接到节点: " + address);
-            
-            // 通知GUI更新连接数
-            if (messageRouter.getMessageListener() != null) {
-                messageRouter.getMessageListener().onConnectionStatusChanged(connections.size());
-            }
-            
-            // 发送握手消息
-            Message helloMessage = new Message(Message.Type.HELLO, nodeId, nodeId + ":" + port);
+
+            Message helloMessage = new Message(Message.Type.HELLO, getNodeIdString(), getAddress());
             connection.sendMessage(helloMessage.serialize());
-            
-            System.out.println("[调试] 已发送握手消息给: " + address + ", 我的节点ID: " + nodeId);
-            
-            // 不要预先添加成员，等待对方的握手回复来获取真实的节点ID
-            
+
             return true;
-            
         } catch (Exception e) {
             System.err.println("连接到节点 " + address + " 失败: " + e.getMessage());
+            connections.remove(address);
             return false;
         }
     }
-    
-    /**
-     * 连接到所有已知节点
-     */
-    private void connectToKnownPeers() {
-        for (String peer : knownPeers) {
-            connectToPeer(peer);
-        }
-    }
-    
-    /**
-     * 接受新的连接
-     */
+
     private void acceptConnections() {
         while (running) {
             try {
                 Socket clientSocket = serverSocket.accept();
-                String remoteAddress = clientSocket.getRemoteSocketAddress().toString();
-                System.out.println("接收到新连接: " + remoteAddress);
-                
+                String remoteAddress = clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort();
                 PeerConnection connection = new PeerConnection(clientSocket, remoteAddress, true);
-                
-                // 启动连接处理线程
+                connections.put(remoteAddress, connection);
                 new Thread(() -> handlePeerConnection(connection)).start();
-                
             } catch (IOException e) {
-                if (running) {
-                    System.err.println("接受连接时发生错误: " + e.getMessage());
-                }
+                if (running) System.err.println("接受连接时发生错误: " + e.getMessage());
             }
         }
     }
-    
-    /**
-     * 处理与对等节点的连接
-     */
+
     private void handlePeerConnection(PeerConnection connection) {
         try {
-            // 将连接添加到连接列表（对于入站连接）
-            if (connection.isInbound()) {
-                connections.put(connection.getAddress(), connection);
-                System.out.println("入站连接已添加: " + connection.getAddress());
-                
-                // 通知GUI更新连接数
-                if (messageRouter.getMessageListener() != null) {
-                    messageRouter.getMessageListener().onConnectionStatusChanged(connections.size());
-                }
-            }
-            
             String line;
             while ((line = connection.readMessage()) != null) {
-                connection.updateLastActivity();
                 try {
                     Message message = Message.deserialize(line);
                     messageRouter.handleMessage(connection, message);
@@ -228,228 +219,147 @@ public class Node {
                 }
             }
         } catch (IOException e) {
-            System.out.println("与节点 " + connection.getAddress() + " 的连接断开");
-            
-            // 通知GUI成员离开 - 需要找到真实的节点ID
-            if (messageRouter.getMessageListener() != null) {
-                // 从节点地址映射中找到对应的节点ID
-                String disconnectedNodeId = null;
-                for (Map.Entry<String, String> entry : nodeAddresses.entrySet()) {
-                    if (entry.getValue().equals(connection.getAddress()) || 
-                        connection.getAddress().contains(entry.getValue().split(":")[1])) {
-                        disconnectedNodeId = entry.getKey();
-                        break;
-                    }
-                }
-                
-                if (disconnectedNodeId != null) {
-                    messageRouter.getMessageListener().onMemberLeft(disconnectedNodeId);
-                    // 清理MessageRouter中的连接记录
-                    messageRouter.cleanupDisconnectedNode(disconnectedNodeId, connection.getAddress());
-                    // 从地址映射中移除
-                    nodeAddresses.remove(disconnectedNodeId);
-                } else {
-                    // 如果找不到对应的节点ID，使用地址作为备用
-                    String fallbackNodeId = "Node-" + connection.getAddress().replace(":", "-");
-                    messageRouter.getMessageListener().onMemberLeft(fallbackNodeId);
-                    messageRouter.cleanupDisconnectedNode(fallbackNodeId, connection.getAddress());
-                }
-            }
+            // 连接断开
         } finally {
+            System.out.println("与节点 " + connection.getAddress() + " 的连接断开");
             connections.remove(connection.getAddress());
-            connection.close();
-            
-            // 通知GUI更新连接数
-            if (messageRouter.getMessageListener() != null) {
-                messageRouter.getMessageListener().onConnectionStatusChanged(connections.size());
+            // 注意：不在这里从路由表移除节点，而是通过PING失败来确认节点下线
+        }
+    }
+
+    public void updateRoutingTable(NodeInfo nodeInfo) {
+        if (nodeInfo.getNodeId().equals(this.nodeId)) return;
+
+        int bucketIndex = getBucketIndex(nodeInfo.getNodeId());
+        Map<BigInteger, NodeInfo> bucket = routingTable.get(bucketIndex);
+
+        if (bucket.containsKey(nodeInfo.getNodeId())) {
+            bucket.get(nodeInfo.getNodeId()).updateLastSeen();
+        } else if (bucket.size() < K_VALUE) {
+            bucket.put(nodeInfo.getNodeId(), nodeInfo);
+        } else {
+            // 桶已满，尝试PING最旧的节点
+            NodeInfo oldestNode = bucket.values().stream().min(Comparator.comparingLong(NodeInfo::getLastSeen)).orElse(null);
+            if (oldestNode != null) {
+                sendPing(oldestNode, (isAlive) -> {
+                    if (!isAlive) {
+                        bucket.remove(oldestNode.getNodeId());
+                        bucket.put(nodeInfo.getNodeId(), nodeInfo);
+                    }
+                });
             }
         }
     }
-    
-    /**
-     * 发送群聊消息到所有连接的节点
-     */
-    public void sendChatMessage(String message) {
-        Message chatMessage = new Message(Message.Type.CHAT, nodeId, message);
-        messageRouter.broadcastMessage(chatMessage);
-        System.out.println("群聊消息已广播到网络");
+
+    public void lookupNodes(BigInteger targetId) {
+        System.out.println("开始为目标 " + targetId.toString(16).substring(0, 8) + " 查找节点...");
+        List<NodeInfo> closest = findClosestNodes(targetId, K_VALUE);
+        for (NodeInfo info : closest) {
+            PeerConnection conn = getOrCreateConnection(info);
+            if (conn != null) {
+                Message findNodeMsg = new Message(Message.Type.FIND_NODE, getNodeIdString(), "", info.getNodeId().toString(16));
+                conn.sendMessage(findNodeMsg.serialize());
+            }
+        }
     }
-    
-    /**
-     * 发送私聊消息到指定节点
-     */
-    public void sendPrivateMessage(String targetNodeId, String message) {
-        Message privateMessage = new Message(Message.Type.PRIVATE_CHAT, nodeId, message, targetNodeId);
-        
-        // 直接处理消息（包括本地处理和转发）
-        messageRouter.handleMessage(null, privateMessage);
-        System.out.println("私聊消息已发送给: " + targetNodeId);
-    }
-    
-    /**
-     * 发送文件传输请求（私聊）
-     */
-    public void sendFileRequest(String targetNodeId, java.io.File file) {
-        // 保存文件信息以便后续传输
-        pendingFiles.put(file.getName(), file);
-        
-        String fileInfo = file.getName() + ":" + file.length(); // 使用冒号分隔符
-        Message fileRequest = new Message(Message.Type.FILE_REQUEST, nodeId, fileInfo, targetNodeId);
-        messageRouter.broadcastMessage(fileRequest);
-        System.out.println("文件传输请求已发送给: " + targetNodeId + ", 文件: " + file.getName());
-    }
-    
-    /**
-     * 发送群聊文件请求
-     */
-    public void sendGroupFileRequest(java.io.File file) {
-        // 保存文件信息以便后续传输
-        pendingFiles.put(file.getName(), file);
-        
-        String fileInfo = file.getName() + ":" + file.length(); // 使用冒号分隔符
-        Message fileRequest = new Message(Message.Type.FILE_REQUEST, nodeId, fileInfo);
-        messageRouter.broadcastMessage(fileRequest);
-        System.out.println("群聊文件请求已广播到网络, 文件: " + file.getName());
-    }
-    
-    /**
-     * 接受文件传输
-     */
-    public void acceptFileTransfer(String senderId, String fileName, String savePath) {
-        // 发送文件传输接受消息
-        String acceptInfo = fileName + ":" + savePath;
-        Message acceptMessage = new Message(Message.Type.FILE_TRANSFER, nodeId, "ACCEPT:" + acceptInfo, senderId);
-        messageRouter.broadcastMessage(acceptMessage);
-        System.out.println("已接受来自 " + senderId + " 的文件传输: " + fileName);
-        System.out.println("文件将保存到: " + savePath);
-    }
-    
-    /**
-     * 拒绝文件传输
-     */
-    public void rejectFileTransfer(String senderId, String fileName) {
-        // 发送文件传输拒绝消息
-        Message rejectMessage = new Message(Message.Type.FILE_TRANSFER, nodeId, "REJECT:" + fileName, senderId);
-        messageRouter.broadcastMessage(rejectMessage);
-        System.out.println("已拒绝来自 " + senderId + " 的文件传输: " + fileName);
-    }
-    
-    /**
-     * 获取当前连接的节点数量
-     */
-    public int getConnectionCount() {
-        return connections.size();
-    }
-    
-    /**
-     * 获取节点地址映射
-     */
-    public Map<String, String> getNodeAddresses() {
-        return nodeAddresses;
-    }
-    
-    /**
-     * 添加节点地址映射
-     */
-    public void addNodeAddress(String nodeId, String address) {
-        nodeAddresses.put(nodeId, address);
-        System.out.println("[调试] 添加节点地址映射: " + nodeId + " -> " + address);
-    }
-    
-    /**
-     * 获取节点ID
-     */
-    public String getNodeId() {
-        return nodeId;
-    }
-    
-    /**
-     * 获取监听端口
-     */
-    public int getPort() {
-        return port;
-    }
-    
-    /**
-     * 获取连接映射（用于MessageRouter）
-     */
-    public Map<String, PeerConnection> getConnections() {
-        return connections;
-    }
-    
-    /**
-     * 设置消息监听器
-     */
-    public void setMessageListener(MessageListener listener) {
-        messageRouter.setMessageListener(listener);
-    }
-    
-    /**
-     * 启动心跳检测任务
-     */
-    private void startHeartbeatTask() {
-        Timer heartbeatTimer = new Timer("Heartbeat-" + nodeId, true);
-        heartbeatTimer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                if (running) {
-                    // 发送心跳
-                    messageRouter.sendHeartbeat();
-                    
-                    // 检查超时连接
-                    checkTimeoutConnections();
+
+    private void startMaintenanceTasks() {
+        // 定期PING路由表中的节点以检查其健康状况
+        scheduler.scheduleAtFixedRate(() -> {
+            System.out.println("执行路由表维护任务...");
+            for (Map<BigInteger, NodeInfo> bucket : routingTable) {
+                for (NodeInfo info : bucket.values()) {
+                    sendPing(info, (isAlive) -> {
+                        if (!isAlive) {
+                            bucket.remove(info.getNodeId());
+                            System.out.println("节点 " + info.getNodeId().toString(16).substring(0, 8) + " 无响应，已从路由表移除");
+                        }
+                    });
                 }
             }
-        }, 30000, 30000); // 每30秒执行一次
+        }, 1, 5, TimeUnit.MINUTES); // 每5分钟执行一次
+
+        // 定期刷新K-桶，特别是那些很久没有变化的
+        scheduler.scheduleAtFixedRate(() -> {
+            System.out.println("执行K-桶刷新任务...");
+            for (int i = 0; i < ID_LENGTH; i++) {
+                // 对每个桶生成一个随机ID并发起查找
+                BigInteger randomIdInBucket = generateRandomIdInBucket(i);
+                lookupNodes(randomIdInBucket);
+            }
+        }, 10, 15, TimeUnit.MINUTES); // 每15分钟执行一次
     }
-    
-    /**
-     * 检查并清理超时的连接
-     */
-    private void checkTimeoutConnections() {
-        long timeoutMs = 120000; // 2分钟超时
-        List<String> timeoutConnections = new ArrayList<>();
-        
-        for (Map.Entry<String, PeerConnection> entry : connections.entrySet()) {
-            if (entry.getValue().isTimeout(timeoutMs)) {
-                timeoutConnections.add(entry.getKey());
+
+    private void sendPing(NodeInfo target, java.util.function.Consumer<Boolean> callback) {
+        PeerConnection conn = getOrCreateConnection(target);
+        if (conn != null) {
+            Message pingMsg = new Message(Message.Type.PING, getNodeIdString(), "ping", target.getNodeId().toString(16));
+            conn.sendMessage(pingMsg.serialize());
+            // 简单实现：假设如果在一定时间内没有收到PONG，则认为节点离线
+            // 一个更健壮的实现需要一个回调管理器
+            scheduler.schedule(() -> callback.accept(false), 5, TimeUnit.SECONDS); // 5秒超时
+        } else {
+            callback.accept(false);
+        }
+    }
+
+    private PeerConnection getOrCreateConnection(NodeInfo info) {
+        if (connections.containsKey(info.getAddress())) {
+            return connections.get(info.getAddress());
+        } else {
+            if (connectToPeer(info.getAddress())) {
+                return connections.get(info.getAddress());
             }
         }
-        
-        for (String address : timeoutConnections) {
-            System.out.println("连接超时，断开: " + address);
-            PeerConnection connection = connections.remove(address);
-            if (connection != null) {
-                connection.close();
-            }
+        return null;
+    }
+
+    private BigInteger generateRandomIdInBucket(int bucketIndex) {
+        BigInteger base = BigInteger.ONE.shiftLeft(ID_LENGTH - 1 - bucketIndex);
+        BigInteger randomComponent = new BigInteger(ID_LENGTH - 1 - bucketIndex, new Random());
+        return this.nodeId.xor(base.or(randomComponent));
+    }
+
+    // --- 原有功能 (适配后) ---
+    public void sendChatMessage(String message) {
+        Message chatMessage = new Message(Message.Type.CHAT, getNodeIdString(), message);
+        messageRouter.broadcastMessage(chatMessage);
+    }
+
+    public void sendPrivateMessage(String targetNodeId, String message) {
+        Message privateMessage = new Message(Message.Type.PRIVATE_CHAT, getNodeIdString(), message, targetNodeId);
+        messageRouter.handleMessage(null, privateMessage);
+    }
+
+    public void sendFileRequest(String targetNodeId, File file) {
+        pendingFiles.put(file.getName(), file);
+        String fileInfo = file.getName() + ":" + file.length();
+        Message fileRequest = new Message(Message.Type.FILE_REQUEST, getNodeIdString(), fileInfo, targetNodeId);
+        messageRouter.broadcastMessage(fileRequest);
+    }
+
+    // --- Getters and Setters ---
+    public String getNodeIdString() { return nodeId.toString(16); }
+    public BigInteger getNodeId() { return nodeId; }
+    public String getAddress() { return "localhost:" + port; }
+    public Map<String, PeerConnection> getConnections() { return connections; }
+    public void setMessageListener(MessageListener listener) { messageRouter.setMessageListener(listener); }
+
+    public List<NodeInfo> findClosestNodes(BigInteger targetId, int count) {
+        List<NodeInfo> allNodes = new ArrayList<>();
+        for (Map<BigInteger, NodeInfo> bucket : routingTable) {
+            allNodes.addAll(bucket.values());
         }
+        allNodes.sort(Comparator.comparing(node -> getDistance(node.getNodeId(), targetId)));
+        return allNodes.subList(0, Math.min(allNodes.size(), count));
     }
-    
-    /**
-     * 获取消息路由器
-     */
-    public MessageRouter getMessageRouter() {
-        return messageRouter;
-    }
-    
-    /**
-     * 获取文件传输服务
-     */
-    public FileTransferService getFileTransferService() {
-        return fileTransferService;
-    }
-    
-    /**
-     * 获取待发送文件
-     */
-    public File getPendingFile(String fileName) {
-        return pendingFiles.get(fileName);
-    }
-    
-    /**
-     * 移除待发送文件
-     */
-    public void removePendingFile(String fileName) {
-        pendingFiles.remove(fileName);
-    }
+
+    public int getPort() { return port; }
+    public MessageRouter getMessageRouter() { return messageRouter; }
+    public FileTransferService getFileTransferService() { return fileTransferService; }
+    public File getPendingFile(String fileName) { return pendingFiles.get(fileName); }
+    public void removePendingFile(String fileName) { pendingFiles.remove(fileName); }
+    public SecurityManager getSecurityManager() { return securityManager; }
+    public boolean isSecurityEnabled() { return securityManager != null && securityManager.isSecurityEnabled(); }
 }
+

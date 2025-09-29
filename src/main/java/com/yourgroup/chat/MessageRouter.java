@@ -1,51 +1,61 @@
 package com.yourgroup.chat;
 
+import com.yourgroup.chat.Node.NodeInfo;
 import java.io.File;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
- * 消息路由器，负责处理消息的转发和洪泛传播
+ * 消息路由器，负责处理DOP协议消息和应用层消息的路由
  */
 public class MessageRouter {
     private final Node node;
     private final Set<String> processedMessages = new CopyOnWriteArraySet<>();
     private final Map<String, Long> messageTimestamps = new ConcurrentHashMap<>();
-    private final Set<String> processedNodes = new CopyOnWriteArraySet<>();
     private MessageListener messageListener;
-    
-    // 清理过期消息记录的时间间隔（毫秒）
+
     private static final long CLEANUP_INTERVAL = 300000; // 5分钟
     private static final long MESSAGE_EXPIRE_TIME = 600000; // 10分钟
-    
+
     public MessageRouter(Node node) {
         this.node = node;
-        // 启动定期清理线程
         startCleanupTask();
     }
-    
-    /**
-     * 设置消息监听器
-     */
+
     public void setMessageListener(MessageListener listener) {
         this.messageListener = listener;
     }
-    
+
     /**
-     * 处理接收到的消息
+     * 处理接收到的所有消息
      */
     public void handleMessage(PeerConnection source, Message message) {
-        // 检查是否已经处理过这条消息
         if (isMessageProcessed(message)) {
             return; // 忽略重复消息
         }
-        
-        // 标记消息为已处理
         markMessageAsProcessed(message);
-        
-        // 根据消息类型进行处理
+
+        // 更新发送方节点的路由信息
+        updateSenderNodeInfo(message);
+
         switch (message.getType()) {
+            // --- DOP 协议消息 ---
+            case PING:
+                handlePingMessage(source, message);
+                break;
+            case PONG:
+                handlePongMessage(source, message);
+                break;
+            case FIND_NODE:
+                handleFindNodeMessage(source, message);
+                break;
+            case NEIGHBORS:
+                handleNeighborsMessage(source, message);
+                break;
+
+            // --- 应用层消息 ---
             case HELLO:
                 handleHelloMessage(source, message);
                 break;
@@ -56,388 +66,273 @@ public class MessageRouter {
                 handlePrivateChatMessage(source, message);
                 break;
             case FILE_REQUEST:
-                handleFileTransferRequest(source, message);
+                // 文件请求也需要路由
+                routeAppMessage(source, message);
                 break;
             case FILE_TRANSFER:
-                handleFileTransferResponse(source, message);
+                // 文件传输响应也需要路由
+                routeAppMessage(source, message);
                 break;
-            case PEER_LIST:
-                handlePeerListMessage(source, message);
-                break;
-            case PING:
-                handlePingMessage(source, message);
-                break;
-            case PONG:
-                handlePongMessage(source, message);
-                break;
-        }
-        
-        // 如果消息还可以转发，则转发给其他节点
-        if (message.canForward()) {
-            forwardMessage(source, message);
+
+            default:
+                // 对于其他应用层消息，统一进行路由
+                routeAppMessage(source, message);
         }
     }
-    
+
     /**
-     * 广播消息到网络（仅转发，不本地处理）
+     * 路由应用层消息 (如 CHAT, PRIVATE_CHAT)
+     */
+    private void routeAppMessage(PeerConnection source, Message message) {
+        // 检查消息是否是发给自己的
+        if (message.getTargetId() != null && message.getTargetId().equals(node.getNodeIdString())) {
+            // 是发给我的，本地处理
+            processLocalAppMessage(message);
+        } else {
+            // 不是发给我的，或者需要广播，进行转发
+            if (message.canForward()) {
+                forwardMessage(source, message);
+            }
+        }
+    }
+
+    /**
+     * 本地处理应用层消息
+     */
+    private void processLocalAppMessage(Message message) {
+        if (messageListener == null) return;
+
+        switch (message.getType()) {
+            case PRIVATE_CHAT:
+                messageListener.onPrivateChatMessageReceived(message.getSenderId(), message.getContent());
+                break;
+            case FILE_REQUEST:
+                handleFileTransferRequest(null, message);
+                break;
+            case FILE_TRANSFER:
+                handleFileTransferResponse(null, message);
+                break;
+            // 其他需要本地处理的消息
+        }
+    }
+
+    /**
+     * 广播消息到网络（用于自己发起的群聊等）
      */
     public void broadcastMessage(Message message) {
-        // 标记消息为已处理
         markMessageAsProcessed(message);
-        
-        // 转发给其他节点
         forwardMessage(null, message);
     }
-    
+
     /**
-     * 转发消息给其他节点（除了源节点）
+     * 转发消息 (Kademlia风格)
      */
     private void forwardMessage(PeerConnection source, Message message) {
         Message forwardMessage = message.createForwardCopy();
         String serialized = forwardMessage.serialize();
-        
-        for (PeerConnection connection : node.getConnections().values()) {
-            // 不要将消息发回给发送者
-            if (connection != source && connection.isConnected()) {
-                connection.sendMessage(serialized);
-            }
-        }
-    }
-    
-    /**
-     * 处理握手消息
-     */
-    private void handleHelloMessage(PeerConnection source, Message message) {
-        String senderId = message.getSenderId();
-        System.out.println("[调试] 收到握手消息，来自节点: " + senderId + ", 地址: " + source.getAddress());
-        
-        // 解析握手消息中的节点地址信息
-        String content = message.getContent();
-        if (content.contains(":")) {
-            String[] parts = content.split(":");
-            if (parts.length >= 2) {
-                String nodeAddress = "localhost:" + parts[parts.length - 1]; // 提取端口号
-                node.addNodeAddress(senderId, nodeAddress);
-                System.out.println("[调试] 解析节点地址: " + senderId + " -> " + nodeAddress);
-            }
-        }
-        
-        // 检查是否是新的连接（基于连接地址而不是节点ID）
-        String connectionKey = senderId + "@" + source.getAddress();
-        boolean isNewConnection = !processedNodes.contains(connectionKey);
-        
-        if (isNewConnection) {
-            // 标记这个连接为已处理
-            processedNodes.add(connectionKey);
-            
-            // 通知GUI有新成员加入
-            if (messageListener != null) {
-                System.out.println("[调试] 通知GUI添加成员: " + senderId);
-                messageListener.onMemberJoined(senderId, source.getAddress());
-            } else {
-                System.out.println("[调试] messageListener 为 null，无法通知GUI");
+
+        // 如果是广播或群聊消息，发送给所有邻居
+        if (message.getTargetId() == null) {
+            for (PeerConnection connection : node.getConnections().values()) {
+                if (connection != source && connection.isConnected()) {
+                    connection.sendMessage(serialized);
+                }
             }
         } else {
-            System.out.println("[调试] 连接 " + connectionKey + " 已经处理过，跳过重复处理");
+            // 如果是私聊或单播消息，查找最近的节点进行转发
+            BigInteger targetNodeId = new BigInteger(message.getTargetId(), 16);
+            List<NodeInfo> closestNodes = node.findClosestNodes(targetNodeId, 3); // 转发给最近的3个节点
+
+            for (NodeInfo info : closestNodes) {
+                PeerConnection connection = node.getConnections().get(info.getAddress());
+                if (connection != null && connection != source && connection.isConnected()) {
+                    connection.sendMessage(serialized);
+                }
+            }
         }
-        
-        // 如果这是入站连接，回复握手消息
+    }
+
+    // --- DOP 消息处理器 ---
+
+    private void handlePingMessage(PeerConnection source, Message message) {
+        // 回复PONG消息
+        Message pongMessage = new Message(Message.Type.PONG, node.getNodeIdString(), "pong");
+        source.sendMessage(pongMessage.serialize());
+    }
+
+    private void handlePongMessage(PeerConnection source, Message message) {
+        // PONG消息确认对方在线，其信息已在 handleMessage 开始时通过 updateSenderNodeInfo 更新
+        System.out.println("收到来自 " + message.getSenderId().substring(0, 8) + " 的 PONG");
+    }
+
+    private void handleFindNodeMessage(PeerConnection source, Message message) {
+        String targetIdStr = message.getTargetId();
+        if (targetIdStr == null) return;
+
+        System.out.println("收到来自 " + message.getSenderId().substring(0, 8) + " 的 FIND_NODE 请求");
+
+        BigInteger targetId = new BigInteger(targetIdStr, 16);
+        List<NodeInfo> closestNodes = node.findClosestNodes(targetId, Node.K_VALUE);
+
+        // 将节点信息序列化为 Content
+        StringBuilder contentBuilder = new StringBuilder();
+        for (NodeInfo info : closestNodes) {
+            contentBuilder.append(info.getNodeId().toString(16)).append(",")
+                          .append(info.getHost()).append(",")
+                          .append(info.getPort()).append(";");
+        }
+
+        Message neighborsMessage = new Message(Message.Type.NEIGHBORS, node.getNodeIdString(), contentBuilder.toString());
+        source.sendMessage(neighborsMessage.serialize());
+    }
+
+    private void handleNeighborsMessage(PeerConnection source, Message message) {
+        System.out.println("收到来自 " + message.getSenderId().substring(0, 8) + " 的 NEIGHBORS 列表");
+        String content = message.getContent();
+        if (content.isEmpty()) return;
+
+        String[] nodesStr = content.split(";");
+        for (String nodeStr : nodesStr) {
+            String[] parts = nodeStr.split(",");
+            if (parts.length == 3) {
+                try {
+                    BigInteger nodeId = new BigInteger(parts[0], 16);
+                    String host = parts[1];
+                    int port = Integer.parseInt(parts[2]);
+
+                    NodeInfo newNode = new NodeInfo(nodeId, host, port);
+                    node.updateRoutingTable(newNode);
+
+                    // 尝试连接到新发现的节点以丰富连接
+                    if (!node.getConnections().containsKey(newNode.getAddress())) {
+                        node.connectToPeer(newNode.getAddress());
+                    }
+                } catch (NumberFormatException e) {
+                    System.err.println("解析NEIGHBORS消息失败: " + nodeStr);
+                }
+            }
+        }
+    }
+
+    // --- 应用层消息处理器 (部分保留) ---
+
+    private void handleHelloMessage(PeerConnection source, Message message) {
+        // HELLO 消息在DOP中主要用于初始连接和信息交换
+        // 节点信息已在 handleMessage 开始时更新
+        System.out.println("收到来自 " + message.getSenderId().substring(0, 8) + " 的 HELLO");
+
+        // 回复一个HELLO，确认连接
         if (source.isInbound()) {
-            System.out.println("[调试] 这是入站连接，回复握手消息");
-            Message replyHello = new Message(Message.Type.HELLO, node.getNodeId(), node.getNodeId() + ":" + node.getPort());
+            Message replyHello = new Message(Message.Type.HELLO, node.getNodeIdString(), node.getAddress());
             source.sendMessage(replyHello.serialize());
         }
-        
-        // 发送自己的邻居列表给新连接的节点
-        sendPeerList(source);
+
+        // 向新节点发起节点发现请求，以获取其邻居
+        Message findNodeMessage = new Message(Message.Type.FIND_NODE, node.getNodeIdString(), "", message.getSenderId());
+        source.sendMessage(findNodeMessage.serialize());
     }
-    
-    /**
-     * 处理聊天消息
-     */
+
     private void handleChatMessage(PeerConnection source, Message message) {
-        System.out.println(String.format("[群聊] %s: %s", 
-            message.getSenderId(), message.getContent()));
-        
-        // 通知GUI界面
         if (messageListener != null) {
             messageListener.onChatMessageReceived(message.getSenderId(), message.getContent());
         }
-    }
-    
-    /**
-     * 处理私聊消息
-     */
-    private void handlePrivateChatMessage(PeerConnection source, Message message) {
-        System.out.println(String.format("[调试] 收到私聊消息 - 发送者: %s, 目标: %s, 自己: %s", 
-            message.getSenderId(), message.getTargetId(), node.getNodeId()));
-        
-        // 检查消息是否是发给自己的
-        if (message.getTargetId() != null && message.getTargetId().equals(node.getNodeId())) {
-            System.out.println(String.format("[私聊] %s: %s", 
-                message.getSenderId(), message.getContent()));
-            
-            // 通知GUI界面
-            if (messageListener != null) {
-                messageListener.onPrivateChatMessageReceived(message.getSenderId(), message.getContent());
-            }
-        } else {
-            System.out.println("[调试] 私聊消息不是发给自己的，将转发");
+        // 转发逻辑由 routeAppMessage 和 forwardMessage 处理
+        if (message.canForward()) {
+            forwardMessage(source, message);
         }
-        // 如果不是发给自己的，继续转发（在forwardMessage中处理）
     }
-    
-    /**
-     * 处理文件传输请求
-     */
+
+    private void handlePrivateChatMessage(PeerConnection source, Message message) {
+        // 路由和本地处理已在 routeAppMessage 中完成
+        // 这里不需要额外操作，因为如果消息是给我的，processLocalAppMessage会处理
+        // 如果不是给我的，forwardMessage会处理
+    }
+
     private void handleFileTransferRequest(PeerConnection source, Message message) {
-        System.out.println("[调试] 收到文件传输请求，内容: " + message.getContent());
-        
-        // 解析文件信息（统一使用冒号分隔符）
+        if (messageListener == null) return;
         String[] parts = message.getContent().split(":");
         if (parts.length >= 2) {
             try {
                 String fileName = parts[0];
                 long fileSize = Long.parseLong(parts[1]);
-                
-                System.out.println(String.format("[文件传输] %s 请求发送文件: %s (%d bytes)", 
-                    message.getSenderId(), fileName, fileSize));
-                
-                // 检查是否是群聊文件请求（没有目标ID）或私聊文件请求（有目标ID）
-                if (message.getTargetId() == null) {
-                    // 群聊文件请求 - 所有人都会收到
-                    System.out.println("[调试] 这是群聊文件请求");
-                    if (messageListener != null) {
-                        messageListener.onFileTransferRequest(message.getSenderId(), fileName, fileSize);
-                    }
-                } else if (message.getTargetId().equals(node.getNodeId())) {
-                    // 私聊文件请求 - 只有目标用户收到
-                    System.out.println("[调试] 这是发给我的私聊文件请求");
-                    if (messageListener != null) {
-                        messageListener.onFileTransferRequest(message.getSenderId(), fileName, fileSize);
-                    }
-                } else {
-                    System.out.println("[调试] 这是发给其他人的私聊文件请求，不处理");
-                }
-                
+                messageListener.onFileTransferRequest(message.getSenderId(), fileName, fileSize);
             } catch (NumberFormatException e) {
                 System.err.println("解析文件大小失败: " + parts[1]);
             }
-        } else {
-            System.err.println("文件传输请求格式错误: " + message.getContent());
         }
     }
-    
-    /**
-     * 处理文件传输响应
-     */
+
     private void handleFileTransferResponse(PeerConnection source, Message message) {
-        System.out.println("[调试] 收到文件传输响应，内容: " + message.getContent());
-        
-        // 检查是否是发给自己的响应
-        if (message.getTargetId() != null && message.getTargetId().equals(node.getNodeId())) {
+        if (messageListener == null) return;
+        String content = message.getContent();
+        String senderId = message.getSenderId();
+
+        if (content.startsWith("ACCEPT:")) {
+            String fileInfo = content.substring(7);
+            String[] parts = fileInfo.split(":", 2);
+            if (parts.length >= 2) {
+                String fileName = parts[0];
+                String savePath = parts[1];
+                messageListener.onSystemMessage("用户 " + senderId + " 接受了文件传输: " + fileName);
+                startFileTransfer(senderId, fileName, savePath);
+            }
+        } else if (content.startsWith("REJECT:")) {
+            String fileName = content.substring(7);
+            messageListener.onSystemMessage("用户 " + senderId + " 拒绝了文件传输: " + fileName);
+        }
+    }
+
+    // --- 辅助方法 ---
+
+    private void updateSenderNodeInfo(Message message) {
+        try {
+            BigInteger senderNodeId = new BigInteger(message.getSenderId(), 16);
+            // 假设消息内容中包含地址信息，或者从连接中获取
+            // 在我们的新设计中，HELLO消息应包含地址
             String content = message.getContent();
-            String senderId = message.getSenderId();
-            
-            if (content.startsWith("ACCEPT:")) {
-                // 文件传输被接受
-                String fileInfo = content.substring(7); // 移除"ACCEPT:"前缀
-                String[] parts = fileInfo.split(":", 2);
-                if (parts.length >= 2) {
-                    String fileName = parts[0];
-                    String savePath = parts[1];
-                    
-                    System.out.println("[文件传输] " + senderId + " 接受了文件: " + fileName);
-                    System.out.println("[文件传输] 保存路径: " + savePath);
-                    
-                    // 通知GUI
-                    if (messageListener != null) {
-                        messageListener.onSystemMessage("用户 " + senderId + " 接受了文件传输: " + fileName);
-                    }
-                    
-                    // 实现实际的文件传输逻辑
-                    startFileTransfer(senderId, fileName, savePath);
-                }
-            } else if (content.startsWith("REJECT:")) {
-                // 文件传输被拒绝
-                String fileName = content.substring(7); // 移除"REJECT:"前缀
-                
-                System.out.println("[文件传输] " + senderId + " 拒绝了文件: " + fileName);
-                
-                // 通知GUI
-                if (messageListener != null) {
-                    messageListener.onSystemMessage("用户 " + senderId + " 拒绝了文件传输: " + fileName);
-                }
+            if (message.getType() == Message.Type.HELLO && content.contains(":")) {
+                String[] parts = content.split(":");
+                String host = parts[0];
+                int port = Integer.parseInt(parts[1]);
+                NodeInfo senderInfo = new NodeInfo(senderNodeId, host, port);
+                node.updateRoutingTable(senderInfo);
             }
+        } catch (Exception e) {
+            // System.err.println("更新发送者节点信息失败: " + e.getMessage());
         }
     }
-    
-    /**
-     * 处理邻居列表消息
-     */
-    private void handlePeerListMessage(PeerConnection source, Message message) {
-        String[] peers = message.getContent().split(",");
-        System.out.println("[调试] 收到邻居列表，包含 " + peers.length + " 个节点: " + message.getContent());
-        
-        for (String peer : peers) {
-            String trimmedPeer = peer.trim();
-            if (!trimmedPeer.isEmpty() && !trimmedPeer.equals("localhost:" + node.getPort())) {
-                // 简单检查：是否已经有到该地址的连接，或者该地址在节点地址映射中
-                boolean alreadyConnected = node.getConnections().containsKey(trimmedPeer) || 
-                                         node.getNodeAddresses().containsValue(trimmedPeer);
-                
-                if (!alreadyConnected) {
-                    System.out.println("[调试] 发现新节点，尝试连接: " + trimmedPeer);
-                    // 延迟一点时间再连接，避免连接冲突
-                    final String finalPeer = trimmedPeer;
-                    new Thread(() -> {
-                        try {
-                            Thread.sleep(1000); // 等待1秒
-                            // 再次检查是否已经连接（在延迟期间可能已经建立连接）
-                            if (!node.getConnections().containsKey(finalPeer) && 
-                                !node.getNodeAddresses().containsValue(finalPeer)) {
-                                node.connectToPeer(finalPeer);
-                            } else {
-                                System.out.println("[调试] 延迟期间节点 " + finalPeer + " 已经连接，跳过");
-                            }
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
-                    }).start();
-                } else {
-                    System.out.println("[调试] 节点 " + trimmedPeer + " 已经连接，跳过");
-                }
-            } else {
-                System.out.println("[调试] 跳过节点: " + trimmedPeer + " (空或自己)");
-            }
-        }
-    }
-    
-    /**
-     * 处理心跳检测消息
-     */
-    private void handlePingMessage(PeerConnection source, Message message) {
-        // 回复PONG消息
-        Message pongMessage = new Message(Message.Type.PONG, node.getNodeId(), "pong");
-        source.sendMessage(pongMessage.serialize());
-    }
-    
-    /**
-     * 处理心跳响应消息
-     */
-    private void handlePongMessage(PeerConnection source, Message message) {
-        // 更新连接的最后活跃时间
-        source.updateLastActivity();
-    }
-    
-    /**
-     * 发送邻居列表给指定连接
-     */
-    private void sendPeerList(PeerConnection target) {
-        // 使用节点地址映射而不是连接地址
-        Collection<String> nodeAddresses = node.getNodeAddresses().values();
-        String peerList = String.join(",", nodeAddresses);
-        
-        System.out.println("[调试] 发送邻居列表给 " + target.getAddress() + ": " + peerList);
-        
-        Message peerListMessage = new Message(Message.Type.PEER_LIST, node.getNodeId(), peerList);
-        target.sendMessage(peerListMessage.serialize());
-    }
-    
-    /**
-     * 检查消息是否已经处理过
-     */
+
     private boolean isMessageProcessed(Message message) {
         return processedMessages.contains(message.getMessageId());
     }
-    
-    /**
-     * 标记消息为已处理
-     */
+
     private void markMessageAsProcessed(Message message) {
         processedMessages.add(message.getMessageId());
         messageTimestamps.put(message.getMessageId(), System.currentTimeMillis());
     }
-    
-    /**
-     * 启动定期清理任务
-     */
+
     private void startCleanupTask() {
         Timer cleanupTimer = new Timer("MessageRouter-Cleanup", true);
         cleanupTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                cleanupExpiredMessages();
+                long currentTime = System.currentTimeMillis();
+                messageTimestamps.entrySet().removeIf(entry -> currentTime - entry.getValue() > MESSAGE_EXPIRE_TIME);
+                processedMessages.retainAll(messageTimestamps.keySet());
             }
         }, CLEANUP_INTERVAL, CLEANUP_INTERVAL);
     }
-    
-    /**
-     * 清理过期的消息记录
-     */
-    private void cleanupExpiredMessages() {
-        long currentTime = System.currentTimeMillis();
-        Set<String> expiredMessages = new HashSet<>();
-        
-        for (Map.Entry<String, Long> entry : messageTimestamps.entrySet()) {
-            if (currentTime - entry.getValue() > MESSAGE_EXPIRE_TIME) {
-                expiredMessages.add(entry.getKey());
-            }
-        }
-        
-        for (String messageId : expiredMessages) {
-            processedMessages.remove(messageId);
-            messageTimestamps.remove(messageId);
-        }
-        
-        if (!expiredMessages.isEmpty()) {
-            System.out.println("清理了 " + expiredMessages.size() + " 条过期消息记录");
-        }
-    }
-    
-    /**
-     * 获取消息监听器
-     */
-    public MessageListener getMessageListener() {
-        return messageListener;
-    }
-    
-    /**
-     * 清理断开连接的节点记录
-     */
-    public void cleanupDisconnectedNode(String nodeId, String address) {
-        // 移除相关的连接记录
-        String connectionKey = nodeId + "@" + address;
-        processedNodes.remove(connectionKey);
-        System.out.println("[调试] 清理断开连接的节点记录: " + connectionKey);
-    }
-    
-    /**
-     * 发送心跳检测到所有连接
-     */
-    public void sendHeartbeat() {
-        Message pingMessage = new Message(Message.Type.PING, node.getNodeId(), "ping");
-        broadcastMessage(pingMessage);
-    }
-    
-    /**
-     * 启动文件传输
-     */
+
     private void startFileTransfer(String targetNodeId, String fileName, String savePath) {
-        // 从待发送文件映射中获取文件
         File fileToSend = node.getPendingFile(fileName);
-        
         if (fileToSend != null && fileToSend.exists()) {
-            System.out.println("[文件传输] 找到文件，开始传输: " + fileToSend.getAbsolutePath());
             node.getFileTransferService().sendFile(targetNodeId, fileToSend, savePath);
-            
-            // 传输开始后移除待发送文件记录
             node.removePendingFile(fileName);
         } else {
-            System.err.println("[文件传输] 找不到要发送的文件: " + fileName);
-            if (messageListener != null) {
-                messageListener.onSystemMessage("错误：找不到要发送的文件 " + fileName);
-            }
+            System.err.println("找不到要发送的文件: " + fileName);
         }
+    }\n    public MessageListener getMessageListener() {
+        return messageListener;
     }
 }
+
