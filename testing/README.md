@@ -1,134 +1,119 @@
-# P2P Chat 测试工具集
+# P2P Chat 测试工具
 
-这个文件夹包含了所有用于测试P2P聊天应用的工具和脚本。
+这个目录包含简洁可靠的测试脚本，用于测试P2P聊天应用的功能。
 
 ## 🚀 快速开始
 
 ### Windows用户
-```cmd
-# 启动测试套件主菜单
-test-launcher.bat
 
-# 或直接启动多GUI测试
-multi-gui-test.bat
-```
+1. **检查系统**：
+   ```cmd
+   check.bat
+   ```
+
+2. **测试CLI版本**（推荐先试这个）：
+   ```cmd
+   cli-test.bat
+   ```
+
+3. **测试GUI版本**（需要JavaFX）：
+   ```cmd
+   gui-test.bat
+   ```
 
 ### Linux/Mac用户
-```bash
-# 启动多GUI测试
-./multi-gui-test.sh
 
-# 或启动多CLI测试
-./multi-cli-test.sh
-```
+1. **测试CLI版本**：
+   ```bash
+   ./cli-test.sh
+   ```
 
-## 📁 文件说明
+2. **测试GUI版本**：
+   ```bash
+   ./gui-test.sh
+   ```
 
-### 主要测试脚本
-- **`test-launcher.bat`** - 测试套件主菜单（Windows）
-- **`multi-gui-test.bat/sh`** - 多GUI实例测试（推荐）
-- **`multi-cli-test.bat/sh`** - 多CLI实例测试（无需JavaFX）
+## 📋 脚本说明
 
-### 其他测试工具
-- **`test-multiple-nodes.bat/sh`** - 交互式节点启动器
-- **`quick-test.bat/sh`** - 快速3节点测试
+### `check.bat`
+- 检查Java安装
+- 检查JAR文件和class文件
+- 测试CLI版本
+- 检查JavaFX可用性
 
-### 文档
-- **`TESTING_GUIDE.md`** - 详细测试指南
-- **`README.md`** - 本文件
+### `cli-test.bat/.sh`
+- 启动CLI版本的P2P聊天节点
+- 支持1-3个节点
+- 无需JavaFX，兼容性最好
+- 每个节点在独立的命令行窗口中运行
 
-## 🎯 推荐测试流程
+### `gui-test.bat/.sh`
+- 启动GUI版本的P2P聊天节点
+- 支持1-3个节点
+- 需要JavaFX支持
+- 每个节点在独立的GUI窗口中运行
 
-### 1. 首次测试
-```cmd
-# Windows
-test-launcher.bat
-# 选择 "1. Multi-GUI Test"
+## 🎮 使用说明
 
-# Linux/Mac
-./multi-gui-test.sh
-```
+### CLI版本测试
+1. 运行 `cli-test.bat`
+2. 选择要启动的节点数量
+3. 在每个命令行窗口中使用以下命令：
+   - `send Hello!` - 发送群聊消息
+   - `status` - 查看连接状态
+   - `list` - 列出连接的节点
+   - `quit` - 退出节点
 
-### 2. 功能验证
-1. **启动多个GUI实例**
-2. **测试群聊功能** - 在一个窗口发送消息，其他窗口应该收到
-3. **测试私聊功能** - 右键用户列表中的用户进行私聊
-4. **测试文件传输** - 使用文件传输按钮发送文件
-5. **测试网络发现** - 观察节点是否自动发现彼此
+### GUI版本测试
+1. 运行 `gui-test.bat`
+2. 选择要启动的节点数量
+3. 在每个GUI窗口中：
+   - 发送群聊消息
+   - 右键用户列表进行私聊
+   - 使用文件传输功能
+   - 手动连接其他节点
 
-### 3. 高级测试
-- 使用 `TESTING_GUIDE.md` 中的详细测试场景
-- 测试网络故障恢复
-- 性能和扩展性测试
+## 🔧 故障排除
 
-## 🔧 测试配置
-
-### GUI测试选项
-- **2个节点** - 基本P2P通信测试
-- **3个节点** - 网络路由测试
-- **4个节点** - 扩展性测试
-- **自定义** - 最多10个节点
-
-### CLI测试选项
-- 相同的节点数量选项
-- 无需JavaFX支持
-- 适合服务器环境测试
-
-## 💡 测试技巧
-
-1. **GUI测试**：
-   - 等待所有窗口完全加载
-   - 观察用户列表的变化
-   - 尝试不同的连接组合
-
-2. **CLI测试**：
-   - 使用 `status` 命令查看连接状态
-   - 使用 `send <message>` 发送群聊消息
-   - 使用 `connect <host:port>` 手动连接节点
-
-3. **网络测试**：
-   - 关闭一个节点，观察其他节点的反应
-   - 重新启动节点，测试重连功能
-   - 测试不同的网络拓扑
-
-## 🐛 故障排除
+### 脚本闪退
+- 运行 `check.bat` 检查系统状态
+- 确保在 `testing/` 目录中运行脚本
+- 确保项目已编译：`mvn clean package`
 
 ### JavaFX问题
-```cmd
-# 检查JavaFX安装
-..\check-javafx.bat
+- 如果GUI版本不工作，使用CLI版本
+- 安装包含JavaFX的Java：https://www.azul.com/downloads/?package=jdk-fx
 
-# 如果GUI失败，使用CLI版本
-multi-cli-test.bat
+### 找不到文件
+- 确保在 `testing/` 目录中运行脚本
+- 运行 `mvn clean package` 重新编译项目
+
+## 💡 测试建议
+
+1. **首次测试**：先运行 `check.bat` 检查系统
+2. **稳定测试**：使用 `cli-test.bat` 进行基本功能测试
+3. **完整测试**：如果JavaFX可用，使用 `gui-test.bat` 测试完整功能
+4. **网络测试**：启动多个节点测试P2P通信
+
+## 📁 文件结构
+
+```
+testing/
+├── check.bat           # 系统检查工具
+├── cli-test.bat/.sh    # CLI版本测试
+├── gui-test.bat/.sh    # GUI版本测试
+├── README.md           # 本文档
+├── TESTING_GUIDE.md    # 详细测试指南
+└── TROUBLESHOOTING.md  # 故障排除指南
 ```
 
-### 端口冲突
-- 脚本会自动使用不同端口（8080, 8081, 8082...）
-- 如果仍有冲突，请关闭其他占用端口的程序
+## 🎯 测试目标
 
-### 连接问题
-- 确保防火墙允许Java程序
-- 检查是否有其他程序占用相同端口
-- 尝试重新启动测试
-
-## 📊 测试结果验证
-
-### 成功指标
-- ✅ 所有节点成功启动
-- ✅ 节点能够相互发现和连接
-- ✅ 消息能够在节点间传递
-- ✅ 文件传输功能正常
-- ✅ 网络具有故障恢复能力
-
-### 常见问题
-- ❌ GUI窗口无法启动 → 检查JavaFX安装
-- ❌ 节点无法连接 → 检查端口和防火墙
-- ❌ 消息传递失败 → 检查网络连接状态
-
-## 🎮 高级测试场景
-
-详细的测试场景和步骤请参考 `TESTING_GUIDE.md` 文件。
-
----
-
-**快速开始：** 双击 `test-launcher.bat` (Windows) 或运行 `./multi-gui-test.sh` (Linux/Mac)
+这些脚本帮助您验证：
+- P2P网络连接
+- 群聊消息传递
+- 私聊功能（GUI版本）
+- 文件传输（GUI版本）
+- 节点发现和路由
+- 安全加密通信
+- 网络故障恢复
