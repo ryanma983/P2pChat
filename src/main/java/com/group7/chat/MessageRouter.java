@@ -108,6 +108,7 @@ public class MessageRouter {
 
         switch (message.getType()) {
             case PRIVATE_CHAT:
+                System.out.println("处理本地私聊消息: " + message.getSenderId().substring(0, 8) + "... -> " + node.getDisplayName() + ": " + message.getContent());
                 messageListener.onPrivateChatMessageReceived(message.getSenderId(), message.getContent());
                 break;
             case FILE_REQUEST:
@@ -147,10 +148,16 @@ public class MessageRouter {
             String targetNodeId = message.getTargetId();
             boolean sentDirectly = false;
             
+            System.out.println("转发私聊消息，目标: " + targetNodeId.substring(0, 8) + "..., 当前连接数: " + node.getConnections().size());
+            
             // 检查是否有直接连接到目标节点
             for (PeerConnection connection : node.getConnections().values()) {
+                String remoteId = connection.getRemoteNodeId();
+                System.out.println("检查连接: " + connection.getAddress() + ", 远程ID: " + (remoteId != null ? remoteId.substring(0, 8) + "..." : "null"));
+                
                 if (connection != source && connection.isConnected() && 
                     targetNodeId.equals(connection.getRemoteNodeId())) {
+                    System.out.println("找到直接连接，发送私聊消息到: " + connection.getAddress());
                     connection.sendMessage(serialized);
                     sentDirectly = true;
                     break;

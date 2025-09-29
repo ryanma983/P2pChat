@@ -333,6 +333,7 @@ public class Node {
     }
 
     public void sendPrivateMessage(String targetNodeId, String message) {
+        System.out.println("发送私聊消息: " + getDisplayName() + " -> " + targetNodeId.substring(0, 8) + "...: " + message);
         Message privateMessage = new Message(Message.Type.PRIVATE_CHAT, getNodeIdString(), message, targetNodeId);
         messageRouter.handleMessage(null, privateMessage);
     }

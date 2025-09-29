@@ -44,7 +44,7 @@ public class PrivateChatWindow {
     
     private void initializeWindow() {
         stage = new Stage();
-        stage.setTitle("私聊 - " + targetMember.getNodeId());
+        stage.setTitle("私聊 - " + targetMember.getDisplayName());
         stage.setWidth(500);
         stage.setHeight(600);
         
@@ -76,7 +76,7 @@ public class PrivateChatWindow {
         });
         
         // 添加欢迎消息
-        addSystemMessage("开始与 " + targetMember.getNodeId() + " 的私聊");
+        addSystemMessage("开始与 " + targetMember.getDisplayName() + " 的私聊");
     }
     
     private void createTopBar(BorderPane root) {

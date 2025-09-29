@@ -149,7 +149,7 @@ public class EnhancedChatController implements Initializable, com.group7.chat.Me
         // 显示窗口
         privateChatWindow.show();
         
-        addSystemMessage("已打开与 " + nodeId + " 的私聊窗口");
+        addSystemMessage("已打开与 " + member.getDisplayName() + " 的私聊窗口");
     }
     
 
