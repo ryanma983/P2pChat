@@ -27,6 +27,10 @@ public class MessageRouter {
     public void setMessageListener(MessageListener listener) {
         this.messageListener = listener;
     }
+    
+    public MessageListener getMessageListener() {
+        return messageListener;
+    }
 
     /**
      * 处理接收到的所有消息
@@ -221,6 +225,14 @@ public class MessageRouter {
         // 节点信息已在 handleMessage 开始时更新
         System.out.println("收到来自 " + message.getSenderId().substring(0, 8) + " 的 HELLO");
 
+        // 设置连接的远程节点ID
+        source.setRemoteNodeId(message.getSenderId());
+
+        // 通知GUI有新成员加入
+        if (messageListener != null) {
+            messageListener.onMemberJoined(message.getSenderId(), message.getContent());
+        }
+
         // 回复一个HELLO，确认连接
         if (source.isInbound()) {
             Message replyHello = new Message(Message.Type.HELLO, node.getNodeIdString(), node.getAddress());
@@ -333,8 +345,5 @@ public class MessageRouter {
         }
     }
     
-    public MessageListener getMessageListener() {
-        return messageListener;
-    }
 }
 

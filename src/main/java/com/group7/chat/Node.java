@@ -223,6 +223,12 @@ public class Node {
         } finally {
             System.out.println("与节点 " + connection.getAddress() + " 的连接断开");
             connections.remove(connection.getAddress());
+            
+            // 通知GUI成员离开
+            if (connection.getRemoteNodeId() != null && messageRouter.getMessageListener() != null) {
+                messageRouter.getMessageListener().onMemberLeft(connection.getRemoteNodeId());
+            }
+            
             // 注意：不在这里从路由表移除节点，而是通过PING失败来确认节点下线
         }
     }

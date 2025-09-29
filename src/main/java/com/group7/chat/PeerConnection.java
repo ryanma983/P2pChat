@@ -13,6 +13,7 @@ public class PeerConnection {
     private String address;
     private final boolean inbound; // true表示入站连接，false表示出站连接
     private long lastActivity; // 最后活跃时间
+    private String remoteNodeId; // 存储远程节点的ID
     
     public PeerConnection(Socket socket, String address, boolean inbound) throws IOException {
         this.socket = socket;
@@ -110,6 +111,20 @@ public class PeerConnection {
      * 获取远程地址
      */
     public String getRemoteAddress() {
-        return address;
+        return socket.getRemoteSocketAddress().toString();
+    }
+    
+    /**
+     * 设置远程节点ID
+     */
+    public void setRemoteNodeId(String nodeId) {
+        this.remoteNodeId = nodeId;
+    }
+    
+    /**
+     * 获取远程节点ID
+     */
+    public String getRemoteNodeId() {
+        return remoteNodeId;
     }
 }
