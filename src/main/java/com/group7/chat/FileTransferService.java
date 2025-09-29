@@ -154,21 +154,70 @@ public class FileTransferService {
     public void sendFile(String targetNodeId, File file, String savePath) {
         transferExecutor.submit(() -> {
             try {
-                // 获取目标节点的地址
-                List<String> addresses = node.getNodeAddresses();
-                String targetAddress = addresses.isEmpty() ? null : addresses.get(0);
+                // 获取目标节点的连接信息
+                String targetAddress = null;
+                
+                // 如果是广播，发送给第一个连接的节点
+                if ("broadcast".equals(targetNodeId)) {
+                    var connections = node.getConnections();
+                    if (!connections.isEmpty()) {
+                        var firstConnection = connections.values().iterator().next();
+                        targetAddress = firstConnection.getRemoteAddress();
+                        System.out.println("[文件传输] 广播模式，发送给: " + targetAddress);
+                    }
+                } else {
+                    // 查找特定目标节点的连接
+                    for (var connection : node.getConnections().values()) {
+                        if (targetNodeId.equals(connection.getRemoteNodeId())) {
+                            targetAddress = connection.getRemoteAddress();
+                            break;
+                        }
+                    }
+                }
+                
                 if (targetAddress == null) {
-                    System.err.println("找不到目标节点地址: " + targetNodeId);
+                    System.err.println("找不到目标节点连接: " + targetNodeId);
+                    if (node.getMessageRouter().getMessageListener() != null) {
+                        node.getMessageRouter().getMessageListener().onSystemMessage(
+                            "文件发送失败: 找不到目标节点 " + targetNodeId);
+                    }
                     return;
                 }
                 
-                String[] addressParts = targetAddress.split(":");
+                // 解析地址和端口
+                String normalizedAddress = targetAddress.replace("localhost", "127.0.0.1");
+                String[] addressParts = normalizedAddress.split(":");
+                
+                if (addressParts.length != 2) {
+                    String errorMsg = "无效的目标地址格式: " + targetAddress + " (标准化后: " + normalizedAddress + ")";
+                    System.err.println("[文件传输] " + errorMsg);
+                    if (node.getMessageRouter().getMessageListener() != null) {
+                        node.getMessageRouter().getMessageListener().onSystemMessage(
+                            "文件发送失败: " + errorMsg);
+                    }
+                    return;
+                }
+                
                 String host = addressParts[0];
-                int targetPort = Integer.parseInt(addressParts[1]) + 1000; // 文件传输端口
+                int basePort;
+                try {
+                    basePort = Integer.parseInt(addressParts[1]);
+                } catch (NumberFormatException e) {
+                    String errorMsg = "无效的端口号: " + addressParts[1] + " (地址: " + targetAddress + ")";
+                    System.err.println("[文件传输] " + errorMsg);
+                    if (node.getMessageRouter().getMessageListener() != null) {
+                        node.getMessageRouter().getMessageListener().onSystemMessage(
+                            "文件发送失败: " + errorMsg);
+                    }
+                    return;
+                }
+                int targetPort = basePort + 1000; // 文件传输端口
                 
                 String sessionId = generateSessionId();
                 
                 System.out.println("[文件传输] 开始发送文件到 " + targetNodeId + " (" + host + ":" + targetPort + ")");
+                System.out.println("[文件传输] 原始地址: " + targetAddress + ", 标准化地址: " + normalizedAddress);
+                System.out.println("[文件传输] 解析结果 - 主机: " + host + ", 基础端口: " + basePort + ", 文件传输端口: " + targetPort);
                 
                 try (Socket socket = new Socket(host, targetPort);
                      FileInputStream fileInput = new FileInputStream(file)) {
@@ -219,10 +268,12 @@ public class FileTransferService {
                     }
                     
                 } catch (IOException e) {
-                    System.err.println("发送文件失败: " + e.getMessage());
+                    String errorMsg = "发送文件失败: " + e.getMessage() + " (目标: " + host + ":" + targetPort + ")";
+                    System.err.println("[文件传输] " + errorMsg);
+                    e.printStackTrace();
                     if (node.getMessageRouter().getMessageListener() != null) {
                         node.getMessageRouter().getMessageListener().onSystemMessage(
-                            "文件发送失败: " + file.getName() + " - " + e.getMessage());
+                            "文件发送失败: " + file.getName() + " → " + targetNodeId + " - " + e.getMessage());
                     }
                 }
                 

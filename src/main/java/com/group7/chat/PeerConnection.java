@@ -111,7 +111,12 @@ public class PeerConnection {
      * 获取远程地址
      */
     public String getRemoteAddress() {
-        return socket.getRemoteSocketAddress().toString();
+        String remoteAddr = socket.getRemoteSocketAddress().toString();
+        // 移除前缀斜杠，如 "/127.0.0.1:8080" -> "127.0.0.1:8080"
+        if (remoteAddr.startsWith("/")) {
+            remoteAddr = remoteAddr.substring(1);
+        }
+        return remoteAddr;
     }
     
     /**
