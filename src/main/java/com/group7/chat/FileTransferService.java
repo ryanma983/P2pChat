@@ -154,16 +154,25 @@ public class FileTransferService {
     public void sendFile(String targetNodeId, File file, String savePath) {
         transferExecutor.submit(() -> {
             try {
+                System.out.println("[文件传输] 开始处理文件发送请求");
+                System.out.println("[文件传输] 目标节点ID: " + targetNodeId);
+                System.out.println("[文件传输] 文件: " + file.getName() + " (" + file.length() + " bytes)");
+                System.out.println("[文件传输] 保存路径: " + savePath);
+                
                 // 获取目标节点的连接信息
                 String targetAddress = null;
                 
                 // 如果是广播，发送给第一个连接的节点
                 if ("broadcast".equals(targetNodeId)) {
                     var connections = node.getConnections();
+                    System.out.println("[文件传输] 广播模式，当前连接数: " + connections.size());
                     if (!connections.isEmpty()) {
                         var firstConnection = connections.values().iterator().next();
                         targetAddress = firstConnection.getRemoteAddress();
-                        System.out.println("[文件传输] 广播模式，发送给: " + targetAddress);
+                        System.out.println("[文件传输] 广播模式，选择连接: " + targetAddress);
+                        System.out.println("[文件传输] 连接的远程节点ID: " + firstConnection.getRemoteNodeId());
+                    } else {
+                        System.out.println("[文件传输] 广播模式失败：没有可用连接");
                     }
                 } else {
                     // 查找特定目标节点的连接
@@ -230,6 +239,7 @@ public class FileTransferService {
                 System.out.println("[文件传输] 开始发送文件到 " + targetNodeId + " (" + host + ":" + targetPort + ")");
                 System.out.println("[文件传输] 原始地址: " + targetAddress + ", 标准化地址: " + normalizedAddress);
                 System.out.println("[文件传输] 解析结果 - 主机: " + host + ", 基础端口: " + basePort + ", 文件传输端口: " + targetPort);
+                System.out.println("[文件传输] 准备连接到: " + host + ":" + targetPort);
                 
                 try (Socket socket = new Socket(host, targetPort);
                      FileInputStream fileInput = new FileInputStream(file)) {
