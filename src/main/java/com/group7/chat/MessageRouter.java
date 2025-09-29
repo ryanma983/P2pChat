@@ -129,7 +129,7 @@ public class MessageRouter {
     }
 
     /**
-     * 转发消息 (Kademlia风格)
+     * 转发消息 (简化版本，适用于小型网络)
      */
     private void forwardMessage(PeerConnection source, Message message) {
         Message forwardMessage = message.createForwardCopy();
@@ -143,14 +143,27 @@ public class MessageRouter {
                 }
             }
         } else {
-            // 如果是私聊或单播消息，查找最近的节点进行转发
-            BigInteger targetNodeId = new BigInteger(message.getTargetId(), 16);
-            List<NodeInfo> closestNodes = node.findClosestNodes(targetNodeId, 3); // 转发给最近的3个节点
-
-            for (NodeInfo info : closestNodes) {
-                PeerConnection connection = node.getConnections().get(info.getAddress());
-                if (connection != null && connection != source && connection.isConnected()) {
+            // 对于私聊消息，先尝试直接发送给目标节点
+            String targetNodeId = message.getTargetId();
+            boolean sentDirectly = false;
+            
+            // 检查是否有直接连接到目标节点
+            for (PeerConnection connection : node.getConnections().values()) {
+                if (connection != source && connection.isConnected() && 
+                    targetNodeId.equals(connection.getRemoteNodeId())) {
                     connection.sendMessage(serialized);
+                    sentDirectly = true;
+                    break;
+                }
+            }
+            
+            // 如果没有直接连接，则转发给所有邻居（洪泛方式）
+            if (!sentDirectly) {
+                System.out.println("没有找到目标节点的直接连接，使用洪泛转发私聊消息");
+                for (PeerConnection connection : node.getConnections().values()) {
+                    if (connection != source && connection.isConnected()) {
+                        connection.sendMessage(serialized);
+                    }
                 }
             }
         }
