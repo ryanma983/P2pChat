@@ -3,17 +3,51 @@
 ## 📋 系统要求
 
 - Java 11 或更高版本
-- 支持JavaFX的运行环境
+- 支持JavaFX的运行环境（GUI模式）
 
 ## 🚀 运行方式
 
-### 方式1：使用可执行JAR文件（推荐）
+### 方式1：GUI界面模式（推荐）
 
+**Windows:**
 ```bash
+# 双击运行
+start-gui.bat
+
+# 或命令行运行
 java -jar ./target/p2p-chat-1.0-SNAPSHOT.jar
 ```
 
-### 方式2：使用Maven运行
+**Linux/Mac:**
+```bash
+# 使用启动脚本
+./start-gui.sh
+
+# 或直接运行
+java -jar ./target/p2p-chat-1.0-SNAPSHOT.jar
+```
+
+### 方式2：命令行模式
+
+**Windows:**
+```bash
+# 双击运行
+start-cli.bat
+
+# 或命令行运行
+java -cp ./target/classes com.group7.chat.Main
+```
+
+**Linux/Mac:**
+```bash
+# 使用启动脚本
+./start-cli.sh
+
+# 或直接运行
+java -cp ./target/classes com.group7.chat.Main
+```
+
+### 方式3：使用Maven运行
 
 ```bash
 # 编译项目
@@ -26,7 +60,7 @@ mvn exec:java -Dexec.mainClass="com.group7.chat.Main"
 mvn javafx:run
 ```
 
-### 方式3：直接运行类文件
+### 方式4：直接运行类文件
 
 ```bash
 # 编译项目
@@ -41,8 +75,10 @@ java --module-path /path/to/javafx/lib --add-modules javafx.controls,javafx.fxml
 
 ## 📁 文件说明
 
-- `target/p2p-chat-1.0-SNAPSHOT.jar` - 包含所有依赖的可执行JAR文件（8.8MB）
+- `target/p2p-chat-1.0-SNAPSHOT.jar` - 包含所有依赖的可执行JAR文件（8.8MB）- **启动GUI界面**
 - `target/decentralized-chat-1.0-SNAPSHOT.jar` - 仅包含项目代码的JAR文件（115KB）
+- `start-gui.bat` / `start-gui.sh` - GUI模式启动脚本
+- `start-cli.bat` / `start-cli.sh` - 命令行模式启动脚本
 
 ## 🎮 使用说明
 
