@@ -131,6 +131,38 @@ P2pChat/
 
 ## 🎮 使用说明
 
+### 测试P2P功能（推荐先做）
+
+**快速启动3个节点测试：**
+```cmd
+# Windows
+quick-test.bat
+
+# Linux/Mac
+./quick-test.sh
+```
+
+**交互式多节点测试：**
+```cmd
+# Windows
+test-multiple-nodes.bat
+
+# Linux/Mac
+./test-multiple-nodes.sh
+```
+
+**手动启动不同端口：**
+```cmd
+# 节点1（端口8080）
+java -cp target\classes com.group7.chat.Main 8080
+
+# 节点2（端口8081，连接到节点1）
+java -cp target\classes com.group7.chat.Main 8081 localhost:8080
+
+# GUI版本指定端口
+java --module-path . --add-modules javafx.controls,javafx.fxml -jar target\p2p-chat-1.0-SNAPSHOT.jar 8081
+```
+
 ### GUI模式
 启动后您将看到：
 - 现代化的聊天界面
