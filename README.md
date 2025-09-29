@@ -1,98 +1,171 @@
-
 # 安全 P2P 聊天应用
 
+一个功能完整的、采用Java和JavaFX开发的**安全P2P聊天应用**。支持群聊、私聊、文件传输，具有强大的安全架构和真正的分布式网络设计。
 
-## 1. 项目概述
+## 🚀 快速开始
 
-本项目是一个功能完整的、采用Java和JavaFX开发的**安全P2P聊天应用**。它旨在提供一个去中心化的通信平台，支持群聊、私聊和文件传输功能。项目的核心亮点在于其强大的安全架构和真正的分布式网络设计。
+### 方法1：一键启动（推荐）
 
-为了满足学术和研究目的，本项目在实现高级安全特性的同时，也**故意植入了若干隐蔽的安全漏洞**，以供同行进行代码审计和安全分析。
-
-## 2. 核心功能
-
-- **P2P网络通信:** 无中央服务器，所有节点直接通信，增强了系统的抗审查和抗单点故障能力。
-- **端到端加密 (E2EE):** 所有私聊和群聊消息均使用强大的加密算法进行端到端加密，确保只有通信方能阅读内容。
-- **安全文件传输:** 支持在加密通道中安全地传输文件。
-- **分布式覆盖网络:** 实现了基于Kademlia的分布式覆盖网络协议（DOP），节点可以动态发现和维护路由，无需依赖静态的种子节点列表。
-- **标准化安全协议:** 定义并实现了一套完整的安全通信协议（SCP），涵盖密钥交换、消息加密、完整性校验和前向保密。
-
-## 3. 技术架构
-
-系统主要由两大核心协议支撑：
-
-### 3.1. 分布式覆盖网络协议 (DOP)
-
-- **目标:** 解决对初始节点列表的依赖，构建一个自组织、自修复的网络。
-- **实现:**
-    - **节点ID:** 每个节点拥有一个256位的SHA-256哈希ID。
-    - **K-桶路由:** 借鉴Kademlia，每个节点维护一个基于异或距离的路由表。
-    - **动态发现:** 通过`FIND_NODE`和`NEIGHBORS`消息实现递归的节点发现。
-    - **健康检查:** 通过`PING`/`PONG`消息定期检查节点活性，移除失效节点。
-- **相关文件:** `Node.java`, `MessageRouter.java`, `docs/DISTRIBUTED_OVERLAY_PROTOCOL.md`
-
-### 3.2. 安全通信协议 (SCP)
-
-- **目标:** 提供强大的端到端加密和安全保障。
-- **实现:**
-    - **密钥体系:** RSA-2048用于身份认证和签名，ECDH (`Curve25519`) 用于密钥协商，AES-256-GCM用于会话加密。
-    - **前向保密:** 每次会话都生成临时的会话密钥，确保长期密钥泄露不影响历史消息安全。
-    - **完整性与认证:** GCM模式和数字签名确保消息不被篡改且来源可信。
-- **相关文件:** `SecurityManager.java`, `CryptoService.java`, `docs/SECURE_COMMUNICATION_PROTOCOL.md`
-
-## 4. 如何编译和运行
-
-本项目是一个标准的Maven项目，需要Java 11或更高版本以及Maven环境。
-
-**编译:**
-
-在项目根目录（`/home/ubuntu/P2pChat`）下执行以下命令：
-
-```bash
-mvn clean install
-```
-
-**运行:**
-
-编译成功后，会生成一个可执行的JAR文件。
-
-**推荐方式:**
-
-Windows用户：
+**Windows用户：**
 ```cmd
 # 双击运行
 start.bat
-
-# 或手动运行
-java --module-path . --add-modules javafx.controls,javafx.fxml -jar target\p2p-chat-1.0-SNAPSHOT.jar
 ```
 
-Linux/Mac用户：
+**Linux/Mac用户：**
 ```bash
-# 使用启动脚本
-./run-with-javafx.sh
-
-# 或手动运行
-java --module-path . --add-modules javafx.controls,javafx.fxml -jar target/p2p-chat-1.0-SNAPSHOT.jar
+# 运行启动脚本
+./start.sh
 ```
 
-**如果遇到问题，请查看:** `QUICK_FIX.md` 或 `JAVAFX_RUNTIME_SOLUTIONS.md`
+### 方法2：手动运行
 
-应用启动后，您可以：
-1.  在第一个终端中启动一个节点（例如，使用默认端口8080）。
-2.  在第二个终端中启动另一个节点，并指定不同的端口（例如 `java -jar ... 8081`）。
-3.  使用GUI界面上的“连接”功能，将第二个节点连接到第一个节点（输入 `localhost:8080`）。
+```bash
+# 编译项目
+mvn clean package
 
-## 5. 安全评审指南
+# 运行GUI版本
+java --module-path . --add-modules javafx.controls,javafx.fxml -jar target/p2p-chat-1.0-SNAPSHOT.jar
 
-本项目包含**故意植入的安全漏洞**，供您进行发现和分析。我们鼓励您从以下几个方面入手：
+# 或运行命令行版本
+java -cp target/classes com.group7.chat.Main
+```
 
-1.  **代码审查:** 仔细阅读核心安全模块的代码，特别是 `security` 包下的文件。
-2.  **协议分析:** 对比`SCP`协议文档和代码实现，检查是否存在偏差。
-3.  **动态测试:** 尝试发送异常格式的消息，观察系统在调试模式和严格模式下的行为。
+## ❌ 常见问题解决
 
-一份详细的**漏洞分析报告**已为您准备好，其中记录了所有植入的漏洞、其原理、潜在影响以及发现方法。我们建议您在完成自己的分析后再查阅此文档。
+### 问题1：缺少 JavaFX 运行时组件
 
-- **漏洞分析报告:** `docs/SECURITY_VULNERABILITIES_ANALYSIS.md`
+**错误信息：** `错误: 缺少 JavaFX 运行时组件` 或 `Module javafx.controls not found`
 
-祝您评审顺利！
+**解决方案：**
 
+1. **最简单方法（推荐）：**
+   - 下载包含JavaFX的Java：https://www.azul.com/downloads/?package=jdk-fx
+   - 选择 "Azul Zulu JDK FX" for your OS
+   - 安装后重新运行 `start.bat`
+
+2. **快速测试方法：**
+   ```cmd
+   # Windows
+   scripts\start-cli.bat
+   
+   # Linux/Mac
+   scripts/start-cli.sh
+   ```
+
+3. **手动安装JavaFX：**
+   - 下载JavaFX SDK：https://openjfx.io/
+   - 解压到某个目录（如：`C:\javafx-sdk-17.0.2`）
+   - 运行：
+   ```cmd
+   java --module-path "C:\javafx-sdk-17.0.2\lib" --add-modules javafx.controls,javafx.fxml -jar target\p2p-chat-1.0-SNAPSHOT.jar
+   ```
+
+### 问题2：找不到JAR文件
+
+**错误信息：** `Unable to access jarfile`
+
+**解决方案：**
+```bash
+# 首先编译项目
+mvn clean package
+
+# 然后运行
+start.bat  # Windows
+./start.sh # Linux/Mac
+```
+
+### 问题3：编译失败
+
+**解决方案：**
+```bash
+# 确保Java版本正确
+java -version  # 需要Java 11+
+
+# 清理并重新编译
+mvn clean compile package
+```
+
+## 📁 项目结构
+
+```
+P2pChat/
+├── src/                          # 源代码
+├── target/                       # 编译输出
+├── start.bat / start.sh         # 主启动脚本
+├── scripts/                     # 其他启动脚本
+│   ├── start-cli.bat/sh        # 命令行版本
+│   ├── start-gui.bat/sh        # GUI版本
+│   └── start-simple.bat/sh     # 简化版本
+├── documentation/               # 详细文档
+│   ├── INSTALL_JAVAFX.md       # JavaFX安装指南
+│   ├── SECURITY_*.md           # 安全相关文档
+│   └── PROJECT_*.md            # 项目文档
+└── README.md                   # 本文件
+```
+
+## 🎮 使用说明
+
+### GUI模式
+启动后您将看到：
+- 现代化的聊天界面
+- 在线成员列表
+- 群聊和私聊功能
+- 文件传输功能
+- 安全加密状态显示
+
+### 命令行模式
+可用命令：
+- `connect <host:port>` - 连接到指定节点
+- `send <message>` - 发送消息
+- `status` - 显示状态
+- `quit` - 退出
+
+## 🔒 安全特性
+
+- **端到端加密 (E2EE)：** RSA-2048 + AES-256-GCM
+- **分布式网络：** 基于Kademlia的覆盖网络协议
+- **安全文件传输：** 加密通道中的文件传输
+- **前向保密：** 动态密钥交换
+- **完整性校验：** 防篡改和重放攻击
+
+## 🛠️ 开发者信息
+
+### 编译要求
+- Java 11 或更高版本
+- Maven 3.6+
+- JavaFX（GUI模式）
+
+### 运行测试
+```bash
+mvn test
+```
+
+### 创建发布版本
+```bash
+mvn clean package
+```
+
+## 📚 详细文档
+
+- **安装问题：** `documentation/INSTALL_JAVAFX.md`
+- **运行指南：** `documentation/RUN_GUIDE.md`
+- **安全架构：** `documentation/SECURITY_ARCHITECTURE.md`
+- **项目完成报告：** `documentation/PROJECT_COMPLETION_REPORT.md`
+
+## 🔍 安全评审
+
+本项目包含**故意植入的安全漏洞**供学术研究：
+- 详细分析：`documentation/SECURITY_VULNERABILITIES_ANALYSIS.md`
+- 安全协议：`documentation/SECURE_COMMUNICATION_PROTOCOL.md`
+
+## 📞 支持
+
+如果遇到问题：
+1. 查看 `documentation/QUICK_FIX.md`
+2. 尝试不同的启动脚本
+3. 检查Java和JavaFX安装
+
+---
+
+**快速开始：** 双击 `start.bat` (Windows) 或运行 `./start.sh` (Linux/Mac)
