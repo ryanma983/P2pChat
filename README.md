@@ -8,15 +8,23 @@
 
 **Windows用户：**
 ```cmd
-# 双击运行
+# 智能启动（自动选择GUI或CLI）
 start.bat
+
+# 仅启动GUI版本
+start-gui-only.bat
 ```
 
 **Linux/Mac用户：**
 ```bash
-# 运行启动脚本
+# 智能启动（自动选择GUI或CLI）
 ./start.sh
+
+# 仅启动GUI版本
+scripts/start-gui.sh
 ```
+
+> **注意：** 如果看到命令行界面而不是GUI，说明您的Java环境缺少JavaFX支持。请查看下面的JavaFX问题解决方案。
 
 ### 方法2：手动运行
 
@@ -33,7 +41,15 @@ java -cp target/classes com.group7.chat.Main
 
 ## ❌ 常见问题解决
 
-### 问题1：缺少 JavaFX 运行时组件
+### 问题1：启动后看到命令行界面而不是GUI
+
+**现象：** 运行 `start.bat` 后看到黑色命令行窗口，而不是图形界面
+
+**原因：** 您的Java环境缺少JavaFX支持，脚本自动回退到命令行版本
+
+**解决方案：** 参考下面的"问题2：缺少 JavaFX 运行时组件"
+
+### 问题2：缺少 JavaFX 运行时组件
 
 **错误信息：** `错误: 缺少 JavaFX 运行时组件` 或 `Module javafx.controls not found`
 

@@ -1,18 +1,27 @@
 @echo off
-echo Starting P2P Chat Application...
+echo ========================================
+echo P2P Chat Application Launcher
+echo ========================================
 echo.
 
-REM Try GUI version first
-echo [1/3] Trying GUI version...
+echo [1/3] Trying GUI version with JavaFX...
 java --module-path . --add-modules javafx.controls,javafx.fxml -jar target\p2p-chat-1.0-SNAPSHOT.jar 2>nul
 if %ERRORLEVEL% EQU 0 goto success
 
-echo [2/3] Trying simple JAR...
+echo GUI failed. [2/3] Trying simple JAR...
 java -jar target\p2p-chat-1.0-SNAPSHOT.jar 2>nul
 if %ERRORLEVEL% EQU 0 goto success
 
-echo [3/3] Trying CLI version...
+echo JAR failed. [3/3] Starting CLI version...
 if exist "target\classes\com\group7\chat\Main.class" (
+    echo.
+    echo ========================================
+    echo Starting Command Line Interface
+    echo ========================================
+    echo Note: GUI version requires JavaFX support
+    echo For GUI version, see: start-gui-only.bat
+    echo ========================================
+    echo.
     java -cp target\classes com.group7.chat.Main
     if %ERRORLEVEL% EQU 0 goto success
 )
