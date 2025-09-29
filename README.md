@@ -122,6 +122,11 @@ P2pChat/
 │   ├── start-cli.bat/sh        # 命令行版本
 │   ├── start-gui.bat/sh        # GUI版本
 │   └── start-simple.bat/sh     # 简化版本
+├── testing/                     # 测试工具集
+│   ├── test-launcher.bat       # 测试套件主菜单
+│   ├── multi-gui-test.bat/sh   # 多GUI实例测试
+│   ├── multi-cli-test.bat/sh   # 多CLI实例测试
+│   └── TESTING_GUIDE.md        # 详细测试指南
 ├── documentation/               # 详细文档
 │   ├── INSTALL_JAVAFX.md       # JavaFX安装指南
 │   ├── SECURITY_*.md           # 安全相关文档
@@ -133,22 +138,34 @@ P2pChat/
 
 ### 测试P2P功能（推荐先做）
 
-**快速启动3个节点测试：**
+**多GUI测试（推荐）：**
 ```cmd
-# Windows
-quick-test.bat
+# Windows - 启动测试套件
+testing\test-launcher.bat
 
-# Linux/Mac
-./quick-test.sh
+# 或直接启动多GUI测试
+testing\multi-gui-test.bat
+
+# Linux/Mac - 多GUI测试
+testing/multi-gui-test.sh
 ```
 
-**交互式多节点测试：**
+**多CLI测试（无需JavaFX）：**
 ```cmd
 # Windows
-test-multiple-nodes.bat
+testing\multi-cli-test.bat
 
 # Linux/Mac
-./test-multiple-nodes.sh
+testing/multi-cli-test.sh
+```
+
+**快速3节点测试：**
+```cmd
+# Windows
+testing\quick-test.bat
+
+# Linux/Mac
+testing/quick-test.sh
 ```
 
 **手动启动不同端口：**
