@@ -100,13 +100,9 @@ public class EnhancedChatController implements Initializable, com.group7.chat.Me
         
         // 更新界面信息
         Platform.runLater(() -> {
-            nodeIdLabel.setText("节点ID: " + node.getNodeId());
+            nodeIdLabel.setText("节点ID: " + node.getDisplayName());
+            // 不添加自己到成员列表，避免自己私聊自己的问题
             updateConnectionCount();
-            
-            // 添加自己到成员列表
-            OnlineMember selfMember = new OnlineMember(node.getNodeId().toString(), "localhost:" + node.getPort());
-            selfMember.setStatus("本机");
-            onlineMembers.add(selfMember);
             updateMemberCount();
         });
         
@@ -278,7 +274,7 @@ public class EnhancedChatController implements Initializable, com.group7.chat.Me
      */
     private void addSentMessage(String content, ChatMessage.MessageType type) {
         Platform.runLater(() -> {
-            ChatMessage message = new ChatMessage(chatNode.getNodeId().toString(), content, type);
+            ChatMessage message = new ChatMessage(chatNode.getDisplayName(), content, type);
             messages.add(message);
             scrollToBottom();
         });
@@ -289,10 +285,33 @@ public class EnhancedChatController implements Initializable, com.group7.chat.Me
      */
     public void addReceivedMessage(String senderId, String content, ChatMessage.MessageType type) {
         Platform.runLater(() -> {
-            ChatMessage message = new ChatMessage(senderId, content, type);
+            // 尝试将节点ID转换为显示名称
+            String displayName = getDisplayNameForNodeId(senderId);
+            ChatMessage message = new ChatMessage(displayName, content, type);
             messages.add(message);
             scrollToBottom();
         });
+    }
+    
+    /**
+     * 根据节点ID获取显示名称
+     */
+    private String getDisplayNameForNodeId(String nodeId) {
+        // 在在线成员中查找
+        OnlineMember member = onlineMembers.stream()
+            .filter(m -> m.getNodeId().equals(nodeId))
+            .findFirst()
+            .orElse(null);
+        
+        if (member != null) {
+            return member.getDisplayName();
+        }
+        
+        // 如果找不到，返回简化的节点ID
+        if (nodeId.length() > 8) {
+            return "Node_" + nodeId.substring(0, 8);
+        }
+        return nodeId;
     }
     
     /**
@@ -427,6 +446,11 @@ public class EnhancedChatController implements Initializable, com.group7.chat.Me
     @Override
     public void onMemberJoined(String nodeId, String address) {
         Platform.runLater(() -> {
+            // 过滤掉自己的节点
+            if (chatNode != null && nodeId.equals(chatNode.getNodeIdString())) {
+                return;
+            }
+            
             // 检查是否已存在
             boolean exists = onlineMembers.stream()
                 .anyMatch(member -> member.getNodeId().equals(nodeId));
@@ -435,7 +459,7 @@ public class EnhancedChatController implements Initializable, com.group7.chat.Me
                 OnlineMember newMember = new OnlineMember(nodeId, address);
                 onlineMembers.add(newMember);
                 updateMemberCount();
-                addSystemMessage("成员 " + nodeId + " 加入了聊天");
+                addSystemMessage("成员 " + newMember.getDisplayName() + " 加入了聊天");
             }
         });
     }
@@ -443,9 +467,17 @@ public class EnhancedChatController implements Initializable, com.group7.chat.Me
     @Override
     public void onMemberLeft(String nodeId) {
         Platform.runLater(() -> {
-            onlineMembers.removeIf(member -> member.getNodeId().equals(nodeId));
-            updateMemberCount();
-            addSystemMessage("成员 " + nodeId + " 离开了聊天");
+            // 找到要移除的成员，获取其显示名称
+            OnlineMember memberToRemove = onlineMembers.stream()
+                .filter(member -> member.getNodeId().equals(nodeId))
+                .findFirst()
+                .orElse(null);
+            
+            if (memberToRemove != null) {
+                onlineMembers.remove(memberToRemove);
+                updateMemberCount();
+                addSystemMessage("成员 " + memberToRemove.getDisplayName() + " 离开了聊天");
+            }
             
             // 成员离开时的处理（已简化）
             

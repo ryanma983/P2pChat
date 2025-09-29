@@ -339,7 +339,24 @@ public class Node {
     }
 
     // --- Getters and Setters ---
-    public String getNodeIdString() { return nodeId.toString(16); }
+    public String getNodeIdString() {
+        return nodeId.toString(16);
+    }
+
+    /**
+     * 获取用户友好的显示名称
+     */
+    public String getDisplayName() {
+        return "Node_" + port;
+    }
+
+    /**
+     * 获取简短的节点ID（用于日志显示）
+     */
+    public String getShortNodeId() {
+        return nodeId.toString(16).substring(0, 8);
+    }
+
     public BigInteger getNodeId() { return nodeId; }
     public String getAddress() { return "localhost:" + port; }
     public Map<String, PeerConnection> getConnections() { return connections; }

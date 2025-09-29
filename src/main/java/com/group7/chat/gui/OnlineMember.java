@@ -10,6 +10,7 @@ public class OnlineMember {
     private final StringProperty nodeId;
     private final StringProperty address;
     private final StringProperty status;
+    private final StringProperty displayName;
     private long lastSeen;
     
     public OnlineMember(String nodeId, String address) {
@@ -17,6 +18,25 @@ public class OnlineMember {
         this.address = new SimpleStringProperty(address);
         this.status = new SimpleStringProperty("在线");
         this.lastSeen = System.currentTimeMillis();
+        
+        // 从地址中提取端口号作为显示名称
+        this.displayName = new SimpleStringProperty(extractDisplayName(address));
+    }
+    
+    public OnlineMember(String nodeId, String address, String displayName) {
+        this.nodeId = new SimpleStringProperty(nodeId);
+        this.address = new SimpleStringProperty(address);
+        this.status = new SimpleStringProperty("在线");
+        this.displayName = new SimpleStringProperty(displayName);
+        this.lastSeen = System.currentTimeMillis();
+    }
+    
+    private String extractDisplayName(String address) {
+        if (address != null && address.contains(":")) {
+            String port = address.split(":")[1];
+            return "Node_" + port;
+        }
+        return "Unknown";
     }
     
     // NodeId 属性
@@ -58,6 +78,19 @@ public class OnlineMember {
         this.status.set(status);
     }
     
+    // DisplayName 属性
+    public StringProperty displayNameProperty() {
+        return displayName;
+    }
+    
+    public String getDisplayName() {
+        return displayName.get();
+    }
+    
+    public void setDisplayName(String displayName) {
+        this.displayName.set(displayName);
+    }
+    
     // LastSeen
     public long getLastSeen() {
         return lastSeen;
@@ -69,7 +102,7 @@ public class OnlineMember {
     
     @Override
     public String toString() {
-        return getNodeId();
+        return getDisplayName();
     }
     
     @Override
