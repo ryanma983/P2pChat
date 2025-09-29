@@ -186,6 +186,13 @@ public class FileTransferService {
                 
                 // 解析地址和端口
                 String normalizedAddress = targetAddress.replace("localhost", "127.0.0.1");
+                
+                // 处理可能的复杂地址格式，如 "localhost/127.0.0.1:9081"
+                if (normalizedAddress.contains("/")) {
+                    // 取斜杠后面的部分
+                    normalizedAddress = normalizedAddress.substring(normalizedAddress.lastIndexOf("/") + 1);
+                }
+                
                 String[] addressParts = normalizedAddress.split(":");
                 
                 if (addressParts.length != 2) {
