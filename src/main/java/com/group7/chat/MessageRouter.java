@@ -88,14 +88,23 @@ public class MessageRouter {
      * 路由应用层消息 (如 CHAT, PRIVATE_CHAT)
      */
     private void routeAppMessage(PeerConnection source, Message message) {
+        System.out.println("路由应用消息: " + message.getType() + ", 目标: " + 
+            (message.getTargetId() != null ? message.getTargetId().substring(0, 8) + "..." : "null") + 
+            ", 我的ID: " + node.getNodeIdString().substring(0, 8) + "...");
+        
         // 检查消息是否是发给自己的
         if (message.getTargetId() != null && message.getTargetId().equals(node.getNodeIdString())) {
+            System.out.println("消息是发给我的，本地处理");
             // 是发给我的，本地处理
             processLocalAppMessage(message);
         } else {
+            System.out.println("消息不是发给我的，检查是否可以转发: " + message.canForward());
             // 不是发给我的，或者需要广播，进行转发
             if (message.canForward()) {
+                System.out.println("开始转发消息");
                 forwardMessage(source, message);
+            } else {
+                System.out.println("消息不能转发 (TTL=" + message.getTtl() + ")");
             }
         }
     }
