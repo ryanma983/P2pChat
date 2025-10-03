@@ -1,4 +1,4 @@
-# 分布式覆盖多方聊天系统 - 作业要求分析
+# Distributed multi-party chat system - 作业要求分析
 
 ## 📋 作业目标概述
 
