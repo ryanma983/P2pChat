@@ -1,20 +1,22 @@
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/security/KeyManager.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/gui/OnlineMember.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/security/SecureFileTransferService.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/PeerConnection.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/security/SecurityManager.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/security/AuthenticationService.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/Main.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/security/KeyExchangeProtocol.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/Message.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/security/CryptoService.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/security/SecureMessageHandler.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/FileTransferService.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/gui/ChatApplication.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/gui/EnhancedChatController.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/gui/PrivateChatWindow.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/MessageListener.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/Node.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/gui/MessageListCell.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/gui/ChatMessage.java
-/home/ubuntu/P2pChat/src/main/java/com/group7/chat/MessageRouter.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\gui\EnhancedChatController.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\gui\MessageListCell.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\Node.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\gui\PrivateChatWindow.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\Main.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\AddressParsingTest.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\FileTransferService.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\gui\ChatApplication.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\security\SecureMessageHandler.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\security\SecurityManager.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\security\CryptoService.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\Message.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\FileTransferTest.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\security\KeyExchangeProtocol.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\security\SecureFileTransferService.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\gui\ChatMessage.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\gui\OnlineMember.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\MessageRouter.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\PeerConnection.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\security\AuthenticationService.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\MessageListener.java
+C:\Users\Ryanm\Desktop\Computer Science Master\Secure Programming\assignment\GROUP WORK\P2pChat\src\main\java\com\group7\chat\security\KeyManager.java

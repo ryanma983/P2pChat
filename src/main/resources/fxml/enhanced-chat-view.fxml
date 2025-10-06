@@ -9,16 +9,16 @@
       <!-- 菜单栏 -->
       <MenuBar>
         <menus>
-          <Menu mnemonicParsing="false" text="文件">
+          <Menu mnemonicParsing="false" text="File">
             <items>
-              <MenuItem mnemonicParsing="false" text="退出" />
+              <MenuItem mnemonicParsing="false" text="exit" />
             </items>
           </Menu>
 
-          <Menu mnemonicParsing="false" text="帮助">
+          <Menu mnemonicParsing="false" text="Help">
             <items>
-              <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" text="关于" />
-              <MenuItem fx:id="settingsMenuItem" mnemonicParsing="false" text="设置" />
+              <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" text="About" />
+              <MenuItem fx:id="settingsMenuItem" mnemonicParsing="false" text="setting" />
             </items>
           </Menu>
         </menus>
@@ -34,7 +34,7 @@
                   <!-- 成员列表标题 -->
                   <HBox alignment="CENTER_LEFT" spacing="10.0" styleClass="member-header">
                      <children>
-                        <Label text="在线成员" styleClass="section-title" />
+                        <Label text="Online Members" styleClass="section-title" />
                         <Label fx:id="memberCountLabel" text="(0)" styleClass="member-count" />
                      </children>
                      <padding>
@@ -50,7 +50,7 @@
                   </ListView>
                   
                   <!-- 操作提示 -->
-                  <Label text="双击成员名称打开私聊窗口" styleClass="hint-label">
+                  <Label text="Double-click a member's name to open the private chat window" styleClass="hint-label">
                      <padding>
                         <Insets bottom="10.0" left="10.0" right="10.0" top="5.0" />
                      </padding>
@@ -64,9 +64,9 @@
                   <!-- 聊天标题栏 -->
                   <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="chat-header">
                      <children>
-                        <Label fx:id="chatTitleLabel" text="群聊" styleClass="chat-title" />
-                        <Label fx:id="nodeIdLabel" text="节点ID: 未知" styleClass="node-info" />
-                        <Label fx:id="connectionCountLabel" text="连接数: 0" styleClass="connection-info" />
+                        <Label fx:id="chatTitleLabel" text="Group Chat" styleClass="chat-title" />
+                        <Label fx:id="nodeIdLabel" text="Node ID: Unknown" styleClass="node-info" />
+                        <Label fx:id="connectionCountLabel" text="connections: 0" styleClass="connection-info" />
                      </children>
                      <padding>
                         <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
@@ -84,19 +84,35 @@
                   <VBox spacing="5.0" styleClass="input-area">
                      <children>
                         <Separator />
+                       <!-- 表情和文件按钮工具栏 -->
+						<HBox fx:id="toolbar" alignment="CENTER_LEFT" spacing="5.0" styleClass="toolbar">
+							<children>
+								<Button fx:id="emojiButton" mnemonicParsing="false" text="😊">
+									<!-- 确保没有tooltip标签 -->
+									<HBox.margin>
+									<Insets left="10.0" />
+										</HBox.margin>
+										</Button>
+										<Button fx:id="fileButton" mnemonicParsing="false" text="📎" onAction="#handleSendFile">
+										<!-- 确保没有tooltip标签 -->
+										</Button>
+										<!-- 可以在这里添加更多工具栏按钮 -->
+										<Region HBox.hgrow="ALWAYS" />
+										<Label text="Hot keys: Enter to send, Shift+Enter to change line" style="-fx-text-fill: #7f8c8d; -fx-font-size: 11px;">
+									<HBox.margin>
+										<Insets right="10.0" />
+									</HBox.margin>
+								</Label>
+							</children>
+						</HBox>
+                        <!-- 消息输入和发送按钮 -->
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                            <children>
-                              <TextArea fx:id="messageInput" prefRowCount="2" promptText="输入消息... (Enter发送, Shift+Enter换行)" HBox.hgrow="ALWAYS" />
+                              <TextArea fx:id="messageInput" prefRowCount="2" promptText="typing..." HBox.hgrow="ALWAYS" />
                               <VBox alignment="CENTER" spacing="5.0">
                                  <children>
-                                    <Button fx:id="sendButton" defaultButton="true" onAction="#handleSendMessage" prefWidth="80.0" text="发送" />
-                                    <HBox alignment="CENTER" spacing="5.0">
-                                       <children>
-
-                                          <Button fx:id="fileButton" onAction="#handleSendFile" prefWidth="50.0" text="文件" />
-                                       </children>
-                                    </HBox>
-                                    <Button fx:id="connectButton" onAction="#handleConnect" prefWidth="80.0" text="连接" />
+                                    <Button fx:id="sendButton" defaultButton="true" onAction="#handleSendMessage" prefWidth="80.0" text="send" />
+                                    <Button fx:id="connectButton" onAction="#handleConnect" prefWidth="80.0" text="connect" />
                                  </children>
                               </VBox>
                            </children>
