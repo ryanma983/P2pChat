@@ -98,7 +98,10 @@
 
 /* 左侧成员面板 */
 .member-panel {
+<<<<<<< HEAD
 	-fx-text-fill: #ABE7ED;
+=======
+>>>>>>> c9a5260c7e355e514c12c5783190726249a101bf
     -fx-background-color: #25272A;
     -fx-border-color: #bdc3c7;
     -fx-border-width: 0 1 0 0;
